@@ -1,10 +1,13 @@
-package postgres
+package blocks
 
 import (
+	"fmt"
 	"time"
-
-	"gorm.io/gorm"
 )
+
+type Filter struct {
+	Keyword string
+}
 
 type TblBlock struct {
 	Id               int       `gorm:"primaryKey;auto_increment;type:serial"`
@@ -47,13 +50,28 @@ type TblBlockCollection struct {
 	IsDeleted int       `gorm:"type:integer;DEFAULT:0"`
 }
 
-func MigrationTables(db *gorm.DB) {
+/* Collection List*/
+// pass limit , offset get productslist
+func (blocks *Block) ProductsList(offset int, limit int, filter Filter, tenantid int) (collectionlists []TblBlock, totalcount int64, err error) {
 
-	db.AutoMigrate(
-		&TblBlock{},
-		&TblBlockCollection{},
-		&TblBlockMstrTag{},
-		&TblBlockTags{},
-	)
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return []TblBlock{}, 0, AuthErr
+	}
+
+	Blockmodel.DataAccess = blocks.DataAccess
+
+	Blockmodel.UserId = blocks.UserId
+
+	collectionlist, _, err := Blockmodel.CollectionList(offset, limit, filter, blocks.DB, tenantid)
+
+	_, count, _ := Blockmodel.CollectionList(0, 0, filter, blocks.DB, tenantid)
+
+	if err != nil {
+
+		fmt.Println(err)
+	}
+
+	return collectionlist, count, nil
 
 }

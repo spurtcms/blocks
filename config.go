@@ -14,7 +14,7 @@ type Config struct {
 	Permissions      *role.PermissionConfig
 }
 
-type Blocks struct {
+type Block struct {
 	AuthEnable       bool
 	PermissionEnable bool
 	AuthFlg          bool
