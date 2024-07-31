@@ -3,7 +3,23 @@ package blocks
 import (
 	"fmt"
 	"time"
+
+	"github.com/spurtcms/blocks/migration"
 )
+
+// role&permission setup config
+func BlockSetup(config Config) *Block {
+
+	migration.AutoMigration(config.DB, config.DataBaseType)
+
+	return &Block{
+		AuthEnable:       config.AuthEnable,
+		PermissionEnable: config.PermissionEnable,
+		DB:               config.DB,
+		Auth:             config.Auth,
+	}
+
+}
 
 type Filter struct {
 	Keyword string

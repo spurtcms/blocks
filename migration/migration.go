@@ -1,8 +1,8 @@
 package migration
 
 import (
-	"github.com/spurtcms/jobs/migration/mysql"
-	"github.com/spurtcms/jobs/migration/postgres"
+	"github.com/spurtcms/blocks/migration/mysql"
+	"github.com/spurtcms/blocks/migration/postgres"
 	"gorm.io/gorm"
 )
 

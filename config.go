@@ -12,6 +12,7 @@ type Config struct {
 	DB               *gorm.DB
 	Auth             *auth.Auth
 	Permissions      *role.PermissionConfig
+	DataBaseType     string
 }
 
 type Block struct {

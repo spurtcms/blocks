@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/spurtcms/auth v0.0.11
-	github.com/spurtcms/jobs v0.0.13
+	
 	github.com/spurtcms/team-roles v0.0.7
 	gorm.io/gorm v1.25.11
 )

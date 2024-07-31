@@ -14,6 +14,8 @@ type TblBlock struct {
 	BlockCss         string    `gorm:"type:text"`
 	CoverImage       string    `gorm:"type:character varying"`
 	IconImage        string    `gorm:"type:character varying"`
+	Free             int       `gorm:"type:integer"`
+	Prime            int       `gorm:"type:integer"`
 	TenantId         int       `gorm:"type:integer"`
 	CreatedOn        time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
 	CreatedBy        int       `gorm:"type:integer"`
