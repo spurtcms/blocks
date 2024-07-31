@@ -5,9 +5,9 @@ import (
 )
 
 // pass limit , offset get collectionlist
-func (Blockmodel BlockModel) CollectionList(offset int, limit int, filter Filter, DB *gorm.DB, tenantid int) (collection []TblBlock, totalcollection int64, err error) {
+func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int) (collection []TblBlock, err error) {
 
-	query := DB.Table("tbl_blocks").Select("tbl_blocks.*").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_block.id").Where("tbl_block_collection.tenant_id=? and tbl_block_collections.is_deleted = ? and tbl_block_collection.user_id = ?", tenantid, 0, Blockmodel.UserId).Order("tbl_block.id desc")
+	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.*").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Where("tbl_block_collections.tenant_id=? and tbl_block_collections.is_deleted = ? and tbl_block_collections.user_id = ?", tenantid, 0, Blockmodel.UserId).Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -17,19 +17,11 @@ func (Blockmodel BlockModel) CollectionList(offset int, limit int, filter Filter
 
 	if Blockmodel.DataAccess == 1 {
 
-		query = query.Where("tbl_block_collection.user_id=?", Blockmodel.UserId)
+		query = query.Where("tbl_block_collections.user_id=?", Blockmodel.UserId)
 	}
 
-	if limit != 0 {
+	query.Find(&collection)
 
-		query.Offset(offset).Limit(limit).Find(&collection)
+	return collection, err
 
-		return collection, 0, err
-
-	} else {
-
-		query.Find(&collection).Count(&totalcollection)
-
-		return collection, totalcollection, err
-	}
 }

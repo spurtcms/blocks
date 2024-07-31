@@ -68,26 +68,24 @@ type TblBlockCollection struct {
 
 /* Collection List*/
 // pass limit , offset get productslist
-func (blocks *Block) ProductsList(offset int, limit int, filter Filter, tenantid int) (collectionlists []TblBlock, totalcount int64, err error) {
+func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlists []TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return []TblBlock{}, 0, AuthErr
+		return []TblBlock{}, AuthErr
 	}
 
 	Blockmodel.DataAccess = blocks.DataAccess
 
 	Blockmodel.UserId = blocks.UserId
 
-	collectionlist, _, err := Blockmodel.CollectionList(offset, limit, filter, blocks.DB, tenantid)
-
-	_, count, _ := Blockmodel.CollectionList(0, 0, filter, blocks.DB, tenantid)
+	collectionlist, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid)
 
 	if err != nil {
 
 		fmt.Println(err)
 	}
 
-	return collectionlist, count, nil
+	return collectionlist, nil
 
 }
