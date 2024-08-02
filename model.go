@@ -11,7 +11,7 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 
 	if filter.Keyword != "" {
 
-		query = query.Where("LOWER(TRIM(title)) LIKE LOWER(TRIM(?))", "%"+filter.Keyword+"%")
+		query = query.Where("LOWER(TRIM(title)) LIKE LOWER(TRIM(?)) or LOWER(TRIM(name)) LIKE LOWER(TRIM(?)) ", "%"+filter.Keyword+"%", "%"+filter.Keyword+"%")
 
 	}
 
@@ -23,5 +23,27 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 	query.Find(&collection)
 
 	return collection, err
+
+}
+
+// pass limit , offset get blocklist
+func (Blockmodel BlockModel) BlockLists(filter Filter, DB *gorm.DB, tenantid int) (block []TblBlock, err error) {
+
+	query := DB.Debug().Table("tbl_blocks").Joins("inner join tbl_block_tags on tbl_block_tags.id=tbl_block.id").Where("tbl_blocks.tenant_id=? ", tenantid).Order("tbl_blocks.id desc")
+
+	if filter.Keyword != "" {
+
+		query = query.Where("LOWER(TRIM(title)) LIKE LOWER(TRIM(?)) or LOWER(TRIM(tag_name)) LIKE LOWER(TRIM(?)) ", "%"+filter.Keyword+"%", "%"+filter.Keyword+"%")
+
+	}
+
+	if Blockmodel.DataAccess == 1 {
+
+		query = query.Where("tbl_blocks.created_by=?", Blockmodel.UserId)
+	}
+
+	query.Find(&block)
+
+	return block, err
 
 }
