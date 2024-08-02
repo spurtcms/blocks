@@ -21,51 +21,6 @@ func BlockSetup(config Config) *Block {
 
 }
 
-type Filter struct {
-	Keyword string
-}
-
-type TblBlock struct {
-	Id               int       `gorm:"primaryKey;auto_increment;type:serial"`
-	Title            string    `gorm:"type:character varying"`
-	BlockDescription string    `gorm:"type:text"`
-	BlockContent     string    `gorm:"type:text"`
-	BlockCss         string    `gorm:"type:text"`
-	CoverImage       string    `gorm:"type:character varying"`
-	IconImage        string    `gorm:"type:character varying"`
-	TenantId         int       `gorm:"type:integer"`
-	CreatedOn        time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
-	CreatedBy        int       `gorm:"type:integer"`
-}
-
-type TblBlockTags struct {
-	Id        int       `gorm:"primaryKey;auto_increment;type:serial"`
-	BlockId   int       `gorm:"type:integer"`
-	TagId     int       `gorm:"type:integer"`
-	TagName   string    `gorm:"type:character varying"`
-	TenantId  int       `gorm:"type:integer"`
-	CreatedOn time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
-	CreatedBy int       `gorm:"type:integer"`
-}
-
-type TblBlockMstrTag struct {
-	Id        int       `gorm:"primaryKey;auto_increment;type:serial"`
-	Name      string    `gorm:"type:character varying"`
-	TenantId  int       `gorm:"type:integer"`
-	CreatedOn time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
-	CreatedBy int       `gorm:"type:integer"`
-}
-
-type TblBlockCollection struct {
-	Id        int       `gorm:"primaryKey;auto_increment;type:serial"`
-	UserId    int       `gorm:"type:integer"`
-	BlockId   int       `gorm:"type:integer"`
-	TenantId  int       `gorm:"type:integer"`
-	DeletedOn time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
-	DeletedBy int       `gorm:"type:integer;DEFAULT:NULL"`
-	IsDeleted int       `gorm:"type:integer;DEFAULT:0"`
-}
-
 /* Collection List*/
 // pass limit , offset get collectionlist
 func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlists []TblBlock, err error) {
@@ -110,5 +65,98 @@ func (blocks *Block) BlockList(filter Filter, tenantid int) (blocklists []TblBlo
 	}
 
 	return blocklist, nil
+
+}
+
+func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err error) {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return TblBlock{}, AuthErr
+	}
+
+	var block TblBlock
+
+	block.TenantId = Bc.TenantId
+	block.BlockContent = Bc.BlockContent
+	block.BlockCss = Bc.BlockCss
+	block.BlockDescription = Bc.BlockDescription
+	block.CoverImage = Bc.CoverImage
+	block.Title = Bc.Title
+	block.CreatedBy = Bc.CreatedBy
+	block.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+
+	createblock, err := Blockmodel.CreateBlocks(block, blocks.DB)
+
+	if err != nil {
+
+		fmt.Println(err)
+	}
+
+	return createblock, nil
+
+}
+
+func (blocks *Block) CheckTagName(tagname string) (tag TblBlockMstrTag, flg bool, err error) {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return TblBlockMstrTag{}, false, AuthErr
+	}
+
+	tag, err1 := Blockmodel.TagNameCheck(tagname, blocks.DB)
+
+	if err1 != nil {
+		return TblBlockMstrTag{}, false, err
+	}
+
+	return tag, flg, nil
+
+}
+
+func (blocks *Block) CreateMasterTag(MstrTag MasterTagCreate) (createtags TblBlockMstrTag, err error) {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return TblBlockMstrTag{}, AuthErr
+	}
+
+	var tags TblBlockMstrTag
+
+	tags.Name = MstrTag.Name
+	tags.CreatedBy = MstrTag.CreatedBy
+	tags.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+
+	createtag, err := Blockmodel.CreateMasterTag(tags, blocks.DB)
+
+	if err != nil {
+		return TblBlockMstrTag{}, err
+	}
+
+	return createtag, nil
+
+}
+
+func (blocks *Block) CreateTag(Tag CreateTag) error {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return AuthErr
+	}
+
+	var tags TblBlockTags
+	tags.BlockId = Tag.BlockId
+	tags.TagId = Tag.TagId
+	tags.TagName = Tag.TagName
+	tags.CreatedBy = Tag.CreatedBy
+	tags.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+
+	err := Blockmodel.CreateBlockTag(tags, blocks.DB)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }
