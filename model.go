@@ -128,15 +128,15 @@ func (Blockmodel BlockModel) CreateBlocks(block TblBlock, DB *gorm.DB) (cblock T
 	return cblock, nil
 }
 
-func (Blockmodel BlockModel) TagNameCheck(tagname string, DB *gorm.DB) (tags TblBlockMstrTag, err error) {
+func (Blockmodel BlockModel) TagNameCheck(tagname string, DB *gorm.DB, tags TblBlockMstrTag) error {
 
 	if err := DB.Table("tbl_block_mstr_tags").Where("LOWER(TRIM(name))=LOWER(TRIM(?))", tagname).First(&tags).Error; err != nil {
 
-		return TblBlockMstrTag{}, err
+		return err
 
 	}
 
-	return tags, nil
+	return nil
 }
 
 func (Blockmodel BlockModel) CreateMasterTag(mstrtags TblBlockMstrTag, DB *gorm.DB) (mstrtag TblBlockMstrTag, err error) {

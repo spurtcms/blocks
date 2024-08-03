@@ -97,20 +97,22 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 
 }
 
-func (blocks *Block) CheckTagName(tagname string) (tag TblBlockMstrTag, flg bool, err error) {
+func (blocks *Block) CheckTagName(tagname string) (flg bool, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return TblBlockMstrTag{}, false, AuthErr
+		return false, AuthErr
 	}
 
-	tag, err1 := Blockmodel.TagNameCheck(tagname, blocks.DB)
+	var block TblBlockMstrTag
+
+	err1 := Blockmodel.TagNameCheck(tagname, blocks.DB, block)
 
 	if err1 != nil {
-		return TblBlockMstrTag{}, false, err
+		return false, err
 	}
 
-	return tag, flg, nil
+	return flg, nil
 
 }
 
