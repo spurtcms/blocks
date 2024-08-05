@@ -97,22 +97,22 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 
 }
 
-func (blocks *Block) CheckTagName(tagname string) (flg bool, err error) {
+func (blocks *Block) CheckTagName(tagname string) (flg TblBlockMstrTag, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return false, AuthErr
+		return TblBlockMstrTag{}, AuthErr
 	}
 
 	var block TblBlockMstrTag
 
-	err1 := Blockmodel.TagNameCheck(tagname, blocks.DB, block)
+	tag, err1 := Blockmodel.TagNameCheck(tagname, blocks.DB, block)
 
 	if err1 != nil {
-		return false, err
+		return TblBlockMstrTag{}, err
 	}
 
-	return flg, nil
+	return tag, nil
 
 }
 
@@ -126,6 +126,7 @@ func (blocks *Block) CreateMasterTag(MstrTag MasterTagCreate) (createtags TblBlo
 	var tags TblBlockMstrTag
 
 	tags.Name = MstrTag.Name
+	tags.TenantId = MstrTag.TenantId
 	tags.CreatedBy = MstrTag.CreatedBy
 	tags.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 
@@ -150,6 +151,7 @@ func (blocks *Block) CreateTag(Tag CreateTag) error {
 	tags.BlockId = Tag.BlockId
 	tags.TagId = Tag.TagId
 	tags.TagName = Tag.TagName
+	tags.TenantId = Tag.TenantId
 	tags.CreatedBy = Tag.CreatedBy
 	tags.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 

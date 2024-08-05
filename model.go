@@ -46,6 +46,7 @@ type TblBlock struct {
 	TenantId         int       `gorm:"type:integer"`
 	CreatedOn        time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
 	CreatedBy        int       `gorm:"type:integer"`
+	ProfileImagePath string    `gorm:"-"`
 }
 
 type TblBlockTags struct {
@@ -79,7 +80,7 @@ type TblBlockCollection struct {
 // pass limit , offset get collectionlist
 func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int) (collection []TblBlock, err error) {
 
-	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.*").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Where("tbl_block_collections.tenant_id=? and tbl_block_collections.is_deleted = ? and tbl_block_collections.user_id = ?", tenantid, 0, Blockmodel.UserId).Order("tbl_blocks.id desc")
+	query := DB.Table("tbl_blocks").Select("tbl_blocks.*").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Where("tbl_block_collections.tenant_id=? and tbl_block_collections.is_deleted = ? and tbl_block_collections.user_id = ?", tenantid, 0, Blockmodel.UserId).Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -101,7 +102,7 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 // pass limit , offset get blocklist
 func (Blockmodel BlockModel) BlockLists(filter Filter, DB *gorm.DB, tenantid int) (block []TblBlock, err error) {
 
-	query := DB.Debug().Table("tbl_blocks").Joins("inner join tbl_block_tags on tbl_block_tags.id=tbl_blocks.id").Where("tbl_blocks.tenant_id=? ", tenantid).Order("tbl_blocks.id desc")
+	query := DB.Debug().Select("tbl_blocks.*,tbl_users.profile_image_path as profile_image_path").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_blocks.tenant_id=? ", tenantid).Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -122,26 +123,26 @@ func (Blockmodel BlockModel) BlockLists(filter Filter, DB *gorm.DB, tenantid int
 
 func (Blockmodel BlockModel) CreateBlocks(block TblBlock, DB *gorm.DB) (cblock TblBlock, err error) {
 
-	if err := DB.Table("tbl_blocks").Create(block).Error; err != nil {
+	if err := DB.Debug().Table("tbl_blocks").Create(&block).Error; err != nil {
 		return TblBlock{}, err
 	}
-	return cblock, nil
+	return block, nil
 }
 
-func (Blockmodel BlockModel) TagNameCheck(tagname string, DB *gorm.DB, tags TblBlockMstrTag) error {
+func (Blockmodel BlockModel) TagNameCheck(tagname string, DB *gorm.DB, tags TblBlockMstrTag) (tag TblBlockMstrTag, err error) {
 
-	if err := DB.Table("tbl_block_mstr_tags").Where("LOWER(TRIM(name))=LOWER(TRIM(?))", tagname).First(&tags).Error; err != nil {
+	if err := DB.Debug().Table("tbl_block_mstr_tags").Where("LOWER(TRIM(name))=LOWER(TRIM(?))", tagname).First(&tags).Error; err != nil {
 
-		return err
+		return TblBlockMstrTag{}, err
 
 	}
 
-	return nil
+	return tags, nil
 }
 
 func (Blockmodel BlockModel) CreateMasterTag(mstrtags TblBlockMstrTag, DB *gorm.DB) (mstrtag TblBlockMstrTag, err error) {
 
-	if err := DB.Table("tbl_block_mstr_tags").Create(&mstrtags).Error; err != nil {
+	if err := DB.Debug().Table("tbl_block_mstr_tags").Create(&mstrtags).Error; err != nil {
 		return TblBlockMstrTag{}, err
 
 	}
@@ -151,7 +152,7 @@ func (Blockmodel BlockModel) CreateMasterTag(mstrtags TblBlockMstrTag, DB *gorm.
 
 func (Blockmodel BlockModel) CreateBlockTag(tags TblBlockTags, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_block_tags").Create(&tags).Error; err != nil {
+	if err := DB.Debug().Table("tbl_block_tags").Create(&tags).Error; err != nil {
 		return err
 
 	}
