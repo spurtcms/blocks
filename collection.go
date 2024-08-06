@@ -68,6 +68,7 @@ func (blocks *Block) BlockList(filter Filter, tenantid int) (blocklists []TblBlo
 
 }
 
+// Create Blog
 func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
@@ -97,6 +98,7 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 
 }
 
+// Check tag name is already exists
 func (blocks *Block) CheckTagName(tagname string) (flg TblBlockMstrTag, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
@@ -116,6 +118,7 @@ func (blocks *Block) CheckTagName(tagname string) (flg TblBlockMstrTag, err erro
 
 }
 
+// Create Master tag
 func (blocks *Block) CreateMasterTag(MstrTag MasterTagCreate) (createtags TblBlockMstrTag, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
@@ -140,6 +143,7 @@ func (blocks *Block) CreateMasterTag(MstrTag MasterTagCreate) (createtags TblBlo
 
 }
 
+// Create tag
 func (blocks *Block) CreateTag(Tag CreateTag) error {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
@@ -162,5 +166,54 @@ func (blocks *Block) CreateTag(Tag CreateTag) error {
 	}
 
 	return nil
+
+}
+
+// Create collection
+func (blocks *Block) BlockCollection(Collections CreateCollection) error {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return AuthErr
+	}
+
+	var collection TblBlockCollection
+
+	collection.UserId = Collections.UserId
+
+	collection.BlockId = Collections.BlockId
+
+	collection.TenantId = Collections.UserId
+
+	err := Blockmodel.CreateBlockCollection(collection, blocks.DB)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+// Get tag list
+func (blocks *Block) TagList(filter Filter, tenantid int) (taglists []TblBlockMstrTag, err error) {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return []TblBlockMstrTag{}, AuthErr
+	}
+
+	Blockmodel.DataAccess = blocks.DataAccess
+
+	Blockmodel.UserId = blocks.UserId
+
+	taglist, err := Blockmodel.TagLists(filter, blocks.DB, tenantid)
+
+	if err != nil {
+
+		fmt.Println(err)
+	}
+
+	return taglist, nil
 
 }
