@@ -183,7 +183,7 @@ func (blocks *Block) BlockCollection(Collections CreateCollection) error {
 
 	collection.BlockId = Collections.BlockId
 
-	collection.TenantId = Collections.UserId
+	collection.TenantId = Collections.TenantId
 
 	err := Blockmodel.CreateBlockCollection(collection, blocks.DB)
 
@@ -215,5 +215,34 @@ func (blocks *Block) TagList(filter Filter, tenantid int) (taglists []TblBlockMs
 	}
 
 	return taglist, nil
+
+}
+
+// Remove Collection
+func (blocks *Block) RemoveCollection(id int, tenantid int) error {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return AuthErr
+	}
+
+	Blockmodel.UserId = blocks.UserId
+
+	var collection TblBlockCollection
+
+	collection.BlockId = id
+	collection.TenantId = tenantid
+	collection.DeletedBy = blocks.UserId
+	collection.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+	collection.IsDeleted = 1
+
+	err := Blockmodel.DeleteCollection(collection, blocks.DB)
+
+	if err != nil {
+
+		return err
+	}
+
+	return nil
 
 }

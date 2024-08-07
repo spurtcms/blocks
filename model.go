@@ -173,7 +173,7 @@ func (Blockmodel BlockModel) CreateBlockTag(tags TblBlockTags, DB *gorm.DB) erro
 // Create block collection
 func (Blockmodel BlockModel) CreateBlockCollection(collection TblBlockCollection, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_block_collections").Create(&collection).Error; err != nil {
+	if err := DB.Debug().Table("tbl_block_collections").Create(&collection).Error; err != nil {
 		return err
 
 	}
@@ -202,5 +202,18 @@ func (Blockmodel BlockModel) TagLists(filter Filter, DB *gorm.DB, tenantid int) 
 	query.Find(&tags)
 
 	return tags, err
+
+}
+
+// Delete Collection
+func (Blockmodel BlockModel) DeleteCollection(collection TblBlockCollection, DB *gorm.DB) error {
+
+	if err := DB.Table("tbl_block_collections").Where("block_id = ? and tenant_id = ? ", collection.BlockId, collection.TenantId).UpdateColumns(map[string]interface{}{"is_deleted": collection.IsDeleted, "deleted_by": collection.DeletedBy, "deleted_on": collection.DeletedOn}).Error; err != nil {
+
+		return err
+
+	}
+
+	return nil
 
 }
