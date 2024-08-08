@@ -46,7 +46,7 @@ func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlist
 }
 
 // Block list
-func (blocks *Block) BlockList(filter Filter, tenantid int) (blocklists []TblBlock, err error) {
+func (blocks *Block) BlockList(filter Filter, tenantid int, work string) (blocklists []TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -57,7 +57,7 @@ func (blocks *Block) BlockList(filter Filter, tenantid int) (blocklists []TblBlo
 
 	Blockmodel.UserId = blocks.UserId
 
-	blocklist, err := Blockmodel.BlockLists(filter, blocks.DB, tenantid)
+	blocklist, err := Blockmodel.BlockLists(filter, blocks.DB, tenantid, work)
 
 	if err != nil {
 

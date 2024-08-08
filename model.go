@@ -106,13 +106,23 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 }
 
 // get blocklist
-func (Blockmodel BlockModel) BlockLists(filter Filter, DB *gorm.DB, tenantid int) (block []TblBlock, err error) {
+func (Blockmodel BlockModel) BlockLists(filter Filter, DB *gorm.DB, tenantid int, work string) (block []TblBlock, err error) {
 
-	query := DB.Select("tbl_blocks.*,tbl_users.profile_image_path as profile_image_path").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_blocks.tenant_id=? ", tenantid).Order("tbl_blocks.id desc")
+	query := DB.Select("tbl_blocks.*,tbl_users.profile_image_path as profile_image_path").Debug().Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by")
+
+	if work == "" {
+
+		query = query.Where("tbl_blocks.tenant_id=? ", tenantid).Order("tbl_blocks.id desc")
+	}
+
+	if work != "" {
+		query = query.Where("tbl_blocks.tenant_id=?  and tbl_blocks.created_by =? ", tenantid, Blockmodel.UserId).Order("tbl_blocks.id desc")
+
+	}
 
 	if filter.Keyword != "" {
 
-		query = query.Where("LOWER(TRIM(title)) LIKE LOWER(TRIM(?)) or LOWER(TRIM(tag_name)) LIKE LOWER(TRIM(?)) ", "%"+filter.Keyword+"%", "%"+filter.Keyword+"%")
+		query = query.Where("LOWER(TRIM(title)) LIKE LOWER(TRIM(?))  ", "%"+filter.Keyword+"%")
 
 	}
 
