@@ -112,11 +112,11 @@ func (Blockmodel BlockModel) BlockLists(filter Filter, DB *gorm.DB, tenantid int
 
 	if work == "" {
 
-		query = query.Where("tbl_blocks.tenant_id=? ", tenantid).Order("tbl_blocks.id desc")
+		query = query.Where("tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is NULL ", tenantid).Order("tbl_blocks.id desc")
 	}
 
 	if work != "" {
-		query = query.Where("tbl_blocks.tenant_id=?  and tbl_blocks.created_by =? ", tenantid, Blockmodel.UserId).Order("tbl_blocks.id desc")
+		query = query.Where("tbl_blocks.created_by =? and (tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is Null  ) ", Blockmodel.UserId, tenantid).Order("tbl_blocks.id desc")
 
 	}
 
@@ -140,7 +140,7 @@ func (Blockmodel BlockModel) BlockLists(filter Filter, DB *gorm.DB, tenantid int
 // Create blocks
 func (Blockmodel BlockModel) CreateBlocks(block TblBlock, DB *gorm.DB) (cblock TblBlock, err error) {
 
-	if err := DB.Table("tbl_blocks").Create(&block).Error; err != nil {
+	if err := DB.Debug().Table("tbl_blocks").Create(&block).Error; err != nil {
 		return TblBlock{}, err
 	}
 	return block, nil
@@ -196,7 +196,7 @@ func (Blockmodel BlockModel) TagLists(filter Filter, DB *gorm.DB, tenantid int) 
 
 	// query := DB.Table("tbl_block_mstr_tags").Joins("inner join tbl_block_tags on tbl_block_tags.tag_id =tbl_block_mstr_tags.id").Joins("inner join tbl_blocks on tbl_blocks.id = tbl_block_tags.block_id").Where("tbl_block_mstr_tags.tenant_id=? ", tenantid).Order("tbl_block_mstr_tags.id desc")
 
-	query := DB.Table("tbl_block_mstr_tags").Where("tbl_block_mstr_tags.tenant_id=? ", tenantid).Order("tbl_block_mstr_tags.id desc")
+	query := DB.Table("tbl_block_mstr_tags").Where("tbl_block_mstr_tags.tenant_id=? or tbl_block_mstr_tags.tenant_id is NULL ", tenantid).Order("tbl_block_mstr_tags.id desc")
 
 	if filter.Keyword != "" {
 
@@ -218,7 +218,7 @@ func (Blockmodel BlockModel) TagLists(filter Filter, DB *gorm.DB, tenantid int) 
 // Delete Collection
 func (Blockmodel BlockModel) DeleteCollection(collection TblBlockCollection, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_block_collections").Where("block_id = ? and tenant_id = ? ", collection.BlockId, collection.TenantId).UpdateColumns(map[string]interface{}{"is_deleted": collection.IsDeleted, "deleted_by": collection.DeletedBy, "deleted_on": collection.DeletedOn}).Error; err != nil {
+	if err := DB.Table("tbl_block_collections").Where("block_id = ? and (tenant_id = ? or tenant_id is NULL ) ", collection.BlockId, collection.TenantId).UpdateColumns(map[string]interface{}{"is_deleted": collection.IsDeleted, "deleted_by": collection.DeletedBy, "deleted_on": collection.DeletedOn}).Error; err != nil {
 
 		return err
 
