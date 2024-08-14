@@ -17,6 +17,7 @@ type BlockCreation struct {
 	BlockCss         string
 	CoverImage       string
 	IconImage        string
+	Prime            int
 	TenantId         int
 	CreatedBy        int
 }
@@ -50,6 +51,7 @@ type TblBlock struct {
 	CoverImage       string    `gorm:"type:character varying"`
 	IconImage        string    `gorm:"type:character varying"`
 	TenantId         int       `gorm:"type:integer"`
+	Prime            int       `gorm:"type:integer"`
 	CreatedOn        time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
 	CreatedBy        int       `gorm:"type:integer"`
 	ProfileImagePath string    `gorm:"-"`
@@ -84,14 +86,20 @@ type TblBlockCollection struct {
 }
 
 // get collectionlist
-func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int) (collection []TblBlock, err error) {
+func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid, blockid int) (collection []TblBlock, err error) {
 
-	query := DB.Table("tbl_blocks").Select("tbl_blocks.*").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Where("tbl_block_collections.tenant_id=? and tbl_block_collections.is_deleted = ? and tbl_block_collections.user_id = ?", tenantid, 0, Blockmodel.UserId).Order("tbl_blocks.id desc")
+	query := DB.Table("tbl_blocks").Select("tbl_blocks.*").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_block_collections.tenant_id=? and tbl_block_collections.is_deleted = ? and tbl_block_collections.user_id = ?", tenantid, 0, Blockmodel.UserId).Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
-		query = query.Where("LOWER(TRIM(title)) LIKE LOWER(TRIM(?)) or LOWER(TRIM(name)) LIKE LOWER(TRIM(?)) ", "%"+filter.Keyword+"%", "%"+filter.Keyword+"%")
+		query = query.Where("LOWER(TRIM(title)) LIKE LOWER(TRIM(?)) or LOWER(TRIM(tbl_block_tags.tag_name)) LIKE LOWER(TRIM(?)) ", "%"+filter.Keyword+"%", "%"+filter.Keyword+"%")
 
+	}
+	if blockid != 0 {
+
+		query = query.Where("and tbl_block_collections.user_id = ?", Blockmodel.UserId)
+	} else {
+		query = query.Where("and tbl_block_collections.user_id = ?", 1)
 	}
 
 	if Blockmodel.DataAccess == 1 {
@@ -110,13 +118,11 @@ func (Blockmodel BlockModel) BlockLists(filter Filter, DB *gorm.DB, tenantid int
 
 	query := DB.Select("tbl_blocks.*,tbl_users.profile_image_path as profile_image_path").Debug().Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by")
 
-	if work == "" {
-
-		query = query.Where("tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is NULL ", tenantid).Order("tbl_blocks.id desc")
-	}
-
 	if work != "" {
 		query = query.Where("tbl_blocks.created_by =? and (tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is Null  ) ", Blockmodel.UserId, tenantid).Order("tbl_blocks.id desc")
+
+	} else {
+		query = query.Where("tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is NULL ", tenantid).Order("tbl_blocks.id desc")
 
 	}
 
@@ -225,5 +231,19 @@ func (Blockmodel BlockModel) DeleteCollection(collection TblBlockCollection, DB 
 	}
 
 	return nil
+
+}
+
+// Get collection based on userid
+
+func (Blockmodel BlockModel) GetCollectionByUserId(collections TblBlockCollection, userid int, DB *gorm.DB) (collection TblBlockCollection, err error) {
+
+	if err := DB.Table("tbl_block_collections").Where("user_id = ? ", userid).Find(&collections).Error; err != nil {
+
+		return TblBlockCollection{}, err
+
+	}
+
+	return collections, nil
 
 }

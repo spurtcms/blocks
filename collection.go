@@ -34,7 +34,11 @@ func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlist
 
 	Blockmodel.UserId = blocks.UserId
 
-	collectionlist, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid)
+	var collection TblBlockCollection
+
+	usercollection, _ := Blockmodel.GetCollectionByUserId(collection, Blockmodel.UserId, blocks.DB)
+
+	collectionlist, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid, usercollection.BlockId)
 
 	if err != nil {
 
@@ -84,6 +88,7 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 	block.BlockDescription = Bc.BlockDescription
 	block.CoverImage = Bc.CoverImage
 	block.Title = Bc.Title
+	block.Prime = Bc.Prime
 	block.CreatedBy = Bc.CreatedBy
 	block.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 

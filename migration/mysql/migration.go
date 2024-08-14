@@ -33,7 +33,7 @@ type TblBlockTags struct {
 
 type TblBlockMstrTag struct {
 	Id        int       `gorm:"primaryKey;auto_increment;"`
-	Name      string    `gorm:"type:varchar(255)"`
+	TagTitle      string    `gorm:"type:varchar(255)"`
 	TenantId  int       `gorm:"type:int"`
 	CreatedOn time.Time `gorm:"type:datetime;DEFAULT:NULL"`
 	CreatedBy int       `gorm:"type:int"`
