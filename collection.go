@@ -34,41 +34,49 @@ func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlist
 
 	Blockmodel.UserId = blocks.UserId
 
-	var collection TblBlockCollection
+	var collection []TblBlockCollection
 
 	usercollection, _ := Blockmodel.GetCollectionByUserId(collection, Blockmodel.UserId, blocks.DB)
 
-	collectionlist, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid, usercollection.BlockId)
+	var id []int
+
+	for _, val := range usercollection {
+
+		id = append(id, val.BlockId)
+
+	}
+
+	collectionlist, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid, id)
 
 	if err != nil {
 
 		fmt.Println(err)
 	}
-
 	return collectionlist, nil
-
 }
 
 // Block list
-func (blocks *Block) BlockList(filter Filter, tenantid int, work string) (blocklists []TblBlock, err error) {
+func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int, work string) (blocklists []TblBlock, countblock int64, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return []TblBlock{}, AuthErr
+		return []TblBlock{}, 0, AuthErr
 	}
 
 	Blockmodel.DataAccess = blocks.DataAccess
 
 	Blockmodel.UserId = blocks.UserId
 
-	blocklist, err := Blockmodel.BlockLists(filter, blocks.DB, tenantid, work)
+	blocklist, _, err := Blockmodel.BlockLists(0, 0, filter, blocks.DB, tenantid, work)
+
+	_, count, _ := Blockmodel.BlockLists(limit, offset, filter, blocks.DB, tenantid, work)
 
 	if err != nil {
 
 		fmt.Println(err)
 	}
 
-	return blocklist, nil
+	return blocklist, count, nil
 
 }
 
@@ -133,7 +141,7 @@ func (blocks *Block) CreateMasterTag(MstrTag MasterTagCreate) (createtags TblBlo
 
 	var tags TblBlockMstrTag
 
-	tags.Name = MstrTag.Name
+	tags.TagTitle = MstrTag.TagTitle
 	tags.TenantId = MstrTag.TenantId
 	tags.CreatedBy = MstrTag.CreatedBy
 	tags.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))

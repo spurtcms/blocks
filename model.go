@@ -23,7 +23,7 @@ type BlockCreation struct {
 }
 
 type MasterTagCreate struct {
-	Name      string
+	TagTitle  string
 	TenantId  int
 	CreatedBy int
 }
@@ -54,7 +54,7 @@ type TblBlock struct {
 	Prime            int       `gorm:"type:integer"`
 	CreatedOn        time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
 	CreatedBy        int       `gorm:"type:integer"`
-	ProfileImagePath string    `gorm:"-"`
+	ProfileImagePath string    `gorm:"<-:false"`
 }
 
 type TblBlockTags struct {
@@ -69,7 +69,7 @@ type TblBlockTags struct {
 
 type TblBlockMstrTag struct {
 	Id        int       `gorm:"primaryKey;auto_increment;type:serial"`
-	Name      string    `gorm:"type:character varying"`
+	TagTitle  string    `gorm:"type:character varying"`
 	TenantId  int       `gorm:"type:integer"`
 	CreatedOn time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
 	CreatedBy int       `gorm:"type:integer"`
@@ -86,20 +86,21 @@ type TblBlockCollection struct {
 }
 
 // get collectionlist
-func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid, blockid int) (collection []TblBlock, err error) {
+func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int, blockid []int) (collection []TblBlock, err error) {
 
-	query := DB.Table("tbl_blocks").Select("tbl_blocks.*").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_block_collections.tenant_id=? and tbl_block_collections.is_deleted = ? and tbl_block_collections.user_id = ?", tenantid, 0, Blockmodel.UserId).Order("tbl_blocks.id desc")
+	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.*").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_block_collections.is_deleted = ?", 0).Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
 		query = query.Where("LOWER(TRIM(title)) LIKE LOWER(TRIM(?)) or LOWER(TRIM(tbl_block_tags.tag_name)) LIKE LOWER(TRIM(?)) ", "%"+filter.Keyword+"%", "%"+filter.Keyword+"%")
 
 	}
-	if blockid != 0 {
 
-		query = query.Where("and tbl_block_collections.user_id = ?", Blockmodel.UserId)
+	if blockid != nil {
+
+		query = query.Where("tbl_block_collections.user_id = ?", Blockmodel.UserId)
 	} else {
-		query = query.Where("and tbl_block_collections.user_id = ?", 1)
+		query = query.Where("tbl_block_collections.tenant_id = ? or tbl_block_collections is NULL", tenantid)
 	}
 
 	if Blockmodel.DataAccess == 1 {
@@ -114,7 +115,7 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 }
 
 // get blocklist
-func (Blockmodel BlockModel) BlockLists(filter Filter, DB *gorm.DB, tenantid int, work string) (block []TblBlock, err error) {
+func (Blockmodel BlockModel) BlockLists(Limit, Offset int, filter Filter, DB *gorm.DB, tenantid int, work string) (block []TblBlock, Totalblock int64, err error) {
 
 	query := DB.Select("tbl_blocks.*,tbl_users.profile_image_path as profile_image_path").Debug().Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by")
 
@@ -137,9 +138,17 @@ func (Blockmodel BlockModel) BlockLists(filter Filter, DB *gorm.DB, tenantid int
 		query = query.Where("tbl_blocks.created_by=?", Blockmodel.UserId)
 	}
 
-	query.Find(&block)
+	if Limit != 0 {
 
-	return block, err
+		query.Limit(Limit).Offset(Offset).Find(&block)
+
+		return block, 0, err
+
+	}
+
+	query.Find(&block).Count(&Totalblock)
+
+	return block, Totalblock, err
 
 }
 
@@ -155,7 +164,7 @@ func (Blockmodel BlockModel) CreateBlocks(block TblBlock, DB *gorm.DB) (cblock T
 // Check tag name is already exists
 func (Blockmodel BlockModel) TagNameCheck(tagname string, DB *gorm.DB, tags TblBlockMstrTag) (tag TblBlockMstrTag, err error) {
 
-	if err := DB.Table("tbl_block_mstr_tags").Where("LOWER(TRIM(name))=LOWER(TRIM(?))", tagname).First(&tags).Error; err != nil {
+	if err := DB.Table("tbl_block_mstr_tags").Where("LOWER(TRIM(tag_title))=LOWER(TRIM(?))", tagname).First(&tags).Error; err != nil {
 
 		return TblBlockMstrTag{}, err
 
@@ -236,11 +245,11 @@ func (Blockmodel BlockModel) DeleteCollection(collection TblBlockCollection, DB 
 
 // Get collection based on userid
 
-func (Blockmodel BlockModel) GetCollectionByUserId(collections TblBlockCollection, userid int, DB *gorm.DB) (collection TblBlockCollection, err error) {
+func (Blockmodel BlockModel) GetCollectionByUserId(collections []TblBlockCollection, userid int, DB *gorm.DB) (collection []TblBlockCollection, err error) {
 
-	if err := DB.Table("tbl_block_collections").Where("user_id = ? ", userid).Find(&collections).Error; err != nil {
+	if err := DB.Debug().Table("tbl_block_collections").Where("user_id = ? ", userid).Find(&collections).Error; err != nil {
 
-		return TblBlockCollection{}, err
+		return []TblBlockCollection{}, err
 
 	}
 
