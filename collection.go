@@ -23,11 +23,11 @@ func BlockSetup(config Config) *Block {
 
 /* Collection List*/
 // pass limit , offset get collectionlist
-func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlists []TblBlock, err error) {
+func (blocks *Block) CollectionList(limit, offset int, filter Filter, tenantid int) (collectionlists []TblBlock, totalcollection int64, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return []TblBlock{}, AuthErr
+		return []TblBlock{}, 0, AuthErr
 	}
 
 	Blockmodel.DataAccess = blocks.DataAccess
@@ -46,13 +46,15 @@ func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlist
 
 	}
 
-	collectionlist, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid, id)
+	collectionlist, _, err := Blockmodel.CollectionLists(limit, offset, filter, blocks.DB, tenantid, id)
+
+	_, totalcount, _ := Blockmodel.CollectionLists(0, 0, filter, blocks.DB, tenantid, id)
 
 	if err != nil {
 
 		fmt.Println(err)
 	}
-	return collectionlist, nil
+	return collectionlist, totalcount, nil
 }
 
 // Block list
@@ -67,9 +69,9 @@ func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int, w
 
 	Blockmodel.UserId = blocks.UserId
 
-	blocklist, _, err := Blockmodel.BlockLists(0, 0, filter, blocks.DB, tenantid, work)
+	blocklist, _, err := Blockmodel.BlockLists(limit, offset, filter, blocks.DB, tenantid, work)
 
-	_, count, _ := Blockmodel.BlockLists(limit, offset, filter, blocks.DB, tenantid, work)
+	_, count, _ := Blockmodel.BlockLists(0, 0, filter, blocks.DB, tenantid, work)
 
 	if err != nil {
 

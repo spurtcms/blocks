@@ -86,9 +86,9 @@ type TblBlockCollection struct {
 }
 
 // get collectionlist
-func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int, blockid []int) (collection []TblBlock, err error) {
+func (Blockmodel BlockModel) CollectionLists(Limit, Offset int, filter Filter, DB *gorm.DB, tenantid int, blockid []int) (collection []TblBlock, Totalcollection int64, err error) {
 
-	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.*").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_block_collections.is_deleted = ?", 0).Order("tbl_blocks.id desc")
+	query := DB.Debug().Table("tbl_blocks").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_block_collections.is_deleted = ?", 0).Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -100,7 +100,7 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 
 		query = query.Where("tbl_block_collections.user_id = ?", Blockmodel.UserId)
 	} else {
-		query = query.Where("tbl_block_collections.tenant_id = ? or tbl_block_collections is NULL", tenantid)
+		query = query.Where("tbl_block_collections.tenant_id = ? or tbl_block_collections.tenant_id is NULL", tenantid)
 	}
 
 	if Blockmodel.DataAccess == 1 {
@@ -108,16 +108,24 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 		query = query.Where("tbl_block_collections.user_id=?", Blockmodel.UserId)
 	}
 
-	query.Find(&collection)
+	if Limit != 0 {
 
-	return collection, err
+		query.Limit(Limit).Offset(Offset).Find(&collection)
+
+		return collection, 0, err
+
+	}
+
+	query.Find(&collection).Count(&Totalcollection)
+
+	return collection, Totalcollection, err
 
 }
 
 // get blocklist
 func (Blockmodel BlockModel) BlockLists(Limit, Offset int, filter Filter, DB *gorm.DB, tenantid int, work string) (block []TblBlock, Totalblock int64, err error) {
 
-	query := DB.Select("tbl_blocks.*,tbl_users.profile_image_path as profile_image_path").Debug().Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by")
+	query := DB.Select("tbl_blocks.*,tbl_users.profile_image_path as profile_image_path").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by")
 
 	if work != "" {
 		query = query.Where("tbl_blocks.created_by =? and (tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is Null  ) ", Blockmodel.UserId, tenantid).Order("tbl_blocks.id desc")
@@ -155,7 +163,7 @@ func (Blockmodel BlockModel) BlockLists(Limit, Offset int, filter Filter, DB *go
 // Create blocks
 func (Blockmodel BlockModel) CreateBlocks(block TblBlock, DB *gorm.DB) (cblock TblBlock, err error) {
 
-	if err := DB.Debug().Table("tbl_blocks").Create(&block).Error; err != nil {
+	if err := DB.Table("tbl_blocks").Create(&block).Error; err != nil {
 		return TblBlock{}, err
 	}
 	return block, nil
@@ -198,7 +206,7 @@ func (Blockmodel BlockModel) CreateBlockTag(tags TblBlockTags, DB *gorm.DB) erro
 // Create block collection
 func (Blockmodel BlockModel) CreateBlockCollection(collection TblBlockCollection, DB *gorm.DB) error {
 
-	if err := DB.Debug().Table("tbl_block_collections").Create(&collection).Error; err != nil {
+	if err := DB.Table("tbl_block_collections").Create(&collection).Error; err != nil {
 		return err
 
 	}
@@ -247,7 +255,7 @@ func (Blockmodel BlockModel) DeleteCollection(collection TblBlockCollection, DB 
 
 func (Blockmodel BlockModel) GetCollectionByUserId(collections []TblBlockCollection, userid int, DB *gorm.DB) (collection []TblBlockCollection, err error) {
 
-	if err := DB.Debug().Table("tbl_block_collections").Where("user_id = ? ", userid).Find(&collections).Error; err != nil {
+	if err := DB.Table("tbl_block_collections").Where("user_id = ? ", userid).Find(&collections).Error; err != nil {
 
 		return []TblBlockCollection{}, err
 
