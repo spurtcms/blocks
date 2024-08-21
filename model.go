@@ -88,7 +88,7 @@ type TblBlockCollection struct {
 // get collectionlist
 func (Blockmodel BlockModel) CollectionLists(Limit, Offset int, filter Filter, DB *gorm.DB, tenantid int, blockid []int) (collection []TblBlock, Totalcollection int64, err error) {
 
-	query := DB.Debug().Table("tbl_blocks").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_block_collections.is_deleted = ?", 0).Order("tbl_blocks.id desc")
+	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_blocks.id").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_block_collections.is_deleted = ?", 0).Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
