@@ -2,6 +2,7 @@ package blocks
 
 import (
 	"fmt"
+
 	"time"
 
 	"github.com/spurtcms/blocks/migration"
@@ -23,46 +24,32 @@ func BlockSetup(config Config) *Block {
 
 /* Collection List*/
 // pass limit , offset get collectionlist
-func (blocks *Block) CollectionList(limit, offset int, filter Filter, tenantid int) (collectionlists []TblBlock, totalcollection int64, err error) {
+func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlists []TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return []TblBlock{}, 0, AuthErr
+		return []TblBlock{}, AuthErr
 	}
 
 	Blockmodel.DataAccess = blocks.DataAccess
 
 	Blockmodel.UserId = blocks.UserId
 
-	var collection []TblBlockCollection
-
-	usercollection, _ := Blockmodel.GetCollectionByUserId(collection, Blockmodel.UserId, blocks.DB)
-
-	var id []int
-
-	for _, val := range usercollection {
-
-		id = append(id, val.BlockId)
-
-	}
-
-	collectionlist, _, err := Blockmodel.CollectionLists(limit, offset, filter, blocks.DB, tenantid, id)
-
-	_, totalcount, _ := Blockmodel.CollectionLists(0, 0, filter, blocks.DB, tenantid, id)
+	collectionlist, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid)
 
 	if err != nil {
 
 		fmt.Println(err)
 	}
-	return collectionlist, totalcount, nil
+	return collectionlist, nil
 }
 
 // Block list
-func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int, work string) (blocklists []TblBlock, countblock int64, err error) {
+func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int, work string) (blocklists []TblBlock, countblock int64, defaultlists []TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return []TblBlock{}, 0, AuthErr
+		return []TblBlock{}, 0, []TblBlock{}, AuthErr
 	}
 
 	Blockmodel.DataAccess = blocks.DataAccess
@@ -73,12 +60,16 @@ func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int, w
 
 	_, count, _ := Blockmodel.BlockLists(0, 0, filter, blocks.DB, tenantid, work)
 
+	var deblock []TblBlock
+
+	defaultlist, _ := Blockmodel.GetBlocks(deblock, blocks.DB)
+
 	if err != nil {
 
 		fmt.Println(err)
 	}
 
-	return blocklist, count, nil
+	return blocklist, count, defaultlist, nil
 
 }
 
@@ -259,5 +250,25 @@ func (blocks *Block) RemoveCollection(id int, tenantid int) error {
 	}
 
 	return nil
+
+}
+
+// Check collection  already exists
+func (blocks *Block) CheckCollection(blockid, tenantid int) (flg TblBlockCollection, err error) {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return TblBlockCollection{}, AuthErr
+	}
+
+	var block TblBlockCollection
+
+	tag, err1 := Blockmodel.CheckCollectionById(block, blockid, tenantid, blocks.DB)
+
+	if err1 != nil {
+		return TblBlockCollection{}, err
+	}
+
+	return tag, nil
 
 }
