@@ -62,7 +62,7 @@ func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int) (
 
 	var deblock []TblBlock
 
-	defaultlist, _ := Blockmodel.GetBlocks(deblock, blocks.DB)
+	defaultlist, _ := Blockmodel.GetBlocks(deblock, filter, blocks.DB)
 
 	if err != nil {
 
@@ -271,4 +271,26 @@ func (blocks *Block) CheckCollection(blockid, tenantid int) (flg TblBlockCollect
 
 	return tag, nil
 
+}
+
+// check block title is alreay exists
+
+func (blocks *Block) CheckTitleInBlock(title string, tenantid int) (bool, error) {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return false, AuthErr
+	}
+
+	var tblblocks TblBlock
+
+	err := Blockmodel.CheckTitleInBlock(&tblblocks, title, blocks.DB, tenantid)
+
+	if err != nil {
+
+		return false, err
+
+	}
+
+	return true, nil
 }

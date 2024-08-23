@@ -18,3 +18,5 @@ func AutoMigration(DB *gorm.DB, dbtype any) {
 	}
 
 }
+
+

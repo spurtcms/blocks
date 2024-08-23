@@ -113,7 +113,7 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 // get blocklist
 func (Blockmodel BlockModel) BlockLists(Limit, Offset int, filter Filter, DB *gorm.DB, tenantid int) (block []TblBlock, Totalblock int64, err error) {
 
-	query := DB.Select("tbl_blocks.*,tbl_users.first_name as first_name ,tbl_users.last_name as last_name ,tbl_users.profile_image_path as profile_image_path").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Where("tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is NULL ", tenantid).Order("tbl_blocks.id desc")
+	query := DB.Select("tbl_blocks.*,tbl_users.first_name as first_name ,tbl_users.last_name as last_name ,tbl_users.profile_image_path as profile_image_path").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Where("tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is NULL", tenantid).Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -245,14 +245,30 @@ func (Blockmodel BlockModel) CheckCollectionById(collections TblBlockCollection,
 
 // get null block
 
-func (Blockmodel BlockModel) GetBlocks(block []TblBlock, DB *gorm.DB) (blocks []TblBlock, err error) {
+func (Blockmodel BlockModel) GetBlocks(block []TblBlock, filter Filter, DB *gorm.DB) (blocks []TblBlock, err error) {
 
-	if err := DB.Debug().Select("tbl_blocks.*,tbl_users.first_name as first_name ,tbl_users.last_name as last_name ,tbl_users.profile_image_path as profile_image_path").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_blocks.tenant_id is NULL and tbl_blocks.id != 1 ").Find(&block).Error; err != nil {
+	query := DB.Debug().Select("tbl_blocks.*,tbl_users.first_name as first_name ,tbl_users.last_name as last_name ,tbl_users.profile_image_path as profile_image_path").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_blocks.tenant_id is NULL and tbl_blocks.id != 1 ")
 
-		return []TblBlock{}, err
+	if filter.Keyword != "" {
+
+		query = query.Where("LOWER(TRIM(tbl_blocks.title)) LIKE LOWER(TRIM(?))  ", "%"+filter.Keyword+"%")
 
 	}
 
+	query.Find(&block)
+
 	return block, nil
 
+}
+
+// check block title is alreay exists
+
+func (Blockmodel BlockModel) CheckTitleInBlock(block *TblBlock, title string, DB *gorm.DB, tenantid int) error {
+
+ if err := DB.Table("tbl_blocks").Where("LOWER(TRIM(title))=LOWER(TRIM(?)) and (tenant_id = ? or tenant_id is NULL  )", title, tenantid).First(&block).Error; err != nil {
+
+		return err
+	}
+
+	return nil
 }
