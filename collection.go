@@ -45,11 +45,11 @@ func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlist
 }
 
 // Block list
-func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int) (blocklists []TblBlock, countblock int64, defaultlists []TblBlock, err error) {
+func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int) (blocklists []TblBlock, countblock int64, defaultlists []TblBlock, deletecollectionid []TblBlockCollection, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return []TblBlock{}, 0, []TblBlock{}, AuthErr
+		return []TblBlock{}, 0, []TblBlock{}, []TblBlockCollection{}, AuthErr
 	}
 
 	Blockmodel.DataAccess = blocks.DataAccess
@@ -64,12 +64,16 @@ func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int) (
 
 	defaultlist, _ := Blockmodel.GetBlocks(deblock, filter, blocks.DB)
 
+	var collection []TblBlockCollection
+
+	deletecollection, _ := Blockmodel.GetDeleteCollection(collection, tenantid, blocks.DB)
+
 	if err != nil {
 
 		fmt.Println(err)
 	}
 
-	return blocklist, count, defaultlist, nil
+	return blocklist, count, defaultlist, deletecollection, nil
 
 }
 

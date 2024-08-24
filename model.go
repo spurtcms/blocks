@@ -91,7 +91,7 @@ type TblBlockCollection struct {
 // get collectionlist
 func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int) (collection []TblBlock, err error) {
 
-	query := DB.Table("tbl_blocks").Select("tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_blocks.id,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_block_collections.is_deleted = ? and tbl_block_collections.user_id = ? and (tbl_block_collections.tenant_id = ? or tbl_block_collections.tenant_id is NULL) ", 0, Blockmodel.UserId, tenantid).Order("tbl_blocks.id desc")
+	query := DB.Table("tbl_blocks").Select("tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_blocks.id,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_block_collections.is_deleted = ? and (tbl_block_collections.user_id = ? or tbl_block_collections.user_id=1) and (tbl_block_collections.tenant_id = ? or tbl_block_collections.tenant_id is NULL) ", 0, Blockmodel.UserId, tenantid).Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -265,10 +265,24 @@ func (Blockmodel BlockModel) GetBlocks(block []TblBlock, filter Filter, DB *gorm
 
 func (Blockmodel BlockModel) CheckTitleInBlock(block *TblBlock, title string, DB *gorm.DB, tenantid int) error {
 
- if err := DB.Table("tbl_blocks").Where("LOWER(TRIM(title))=LOWER(TRIM(?)) and (tenant_id = ? or tenant_id is NULL  )", title, tenantid).First(&block).Error; err != nil {
+	if err := DB.Table("tbl_blocks").Where("LOWER(TRIM(title))=LOWER(TRIM(?)) and (tenant_id = ? or tenant_id is NULL  )", title, tenantid).First(&block).Error; err != nil {
 
 		return err
 	}
 
 	return nil
+}
+
+// get delete collection blockid
+
+func (Blockmodel BlockModel) GetDeleteCollection(collections []TblBlockCollection, tenantid int, DB *gorm.DB) (collection []TblBlockCollection, err error) {
+
+	if err := DB.Table("tbl_block_collections").Where("tbl_block_collections.is_deleted = 1 and (tenant_id = ? or tenant_id is NULL) ", tenantid).First(&collections).Error; err != nil {
+
+		return []TblBlockCollection{}, err
+
+	}
+
+	return collections, nil
+
 }
