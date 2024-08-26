@@ -258,7 +258,7 @@ func (blocks *Block) RemoveCollection(id int, tenantid int) error {
 }
 
 // Check collection  already exists
-func (blocks *Block) CheckCollection(blockid, tenantid int) (flg TblBlockCollection, err error) {
+func (blocks *Block) CheckCollection(blockid, user_id, tenantid int) (flg TblBlockCollection, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -267,7 +267,7 @@ func (blocks *Block) CheckCollection(blockid, tenantid int) (flg TblBlockCollect
 
 	var block TblBlockCollection
 
-	tag, err1 := Blockmodel.CheckCollectionById(block, blockid, tenantid, blocks.DB)
+	tag, err1 := Blockmodel.CheckCollectionById(block, blockid, user_id, tenantid, blocks.DB)
 
 	if err1 != nil {
 		return TblBlockCollection{}, err
@@ -297,4 +297,49 @@ func (blocks *Block) CheckTitleInBlock(title string, tenantid int) (bool, error)
 	}
 
 	return true, nil
+}
+
+// add collection alreay delete collection
+func (blocks *Block) UpdateDeleteCollection(blockid, user_id, tenantid int) error {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return AuthErr
+	}
+
+	err1 := Blockmodel.UpdateDeleteCollectionById(blockid, user_id, tenantid, blocks.DB)
+
+	if err1 != nil {
+		return err1
+	}
+
+	return nil
+
+}
+
+// last 10 days la add pana block count
+func (blocks *Block) DashBoardBlockCount(tenantid int) (Totalcount int, lcount int, err error) {
+
+	autherr := AuthandPermission(blocks)
+
+	if autherr != nil {
+
+		return 0, 0, autherr
+	}
+
+	allblockcount, err := Blockmodel.AllBlockCount(blocks.DB, tenantid)
+
+	if err != nil {
+
+		return 0, 0, err
+	}
+
+	lblockcount, err := Blockmodel.NewBlockCount(blocks.DB, tenantid)
+
+	if err != nil {
+
+		return 0, 0, err
+	}
+
+	return int(allblockcount), int(lblockcount), nil
 }
