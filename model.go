@@ -58,6 +58,8 @@ type TblBlock struct {
 	FirstName        string    `gorm:"<-:false"`
 	LastName         string    `gorm:"<-:false"`
 	Username         string    `gorm:"<-:false"`
+	TagValueArr      []string  `gorm:"-"`
+	TagValue         string    `gorm:"<-:false;"`
 	NameString       string    `gorm:"-"`
 }
 
@@ -92,7 +94,7 @@ type TblBlockCollection struct {
 // get collectionlist
 func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int) (collection []TblBlock, err error) {
 
-	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.id,tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("left join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_block_collections.is_deleted = ? and (tbl_block_collections.user_id = ? or  tbl_block_collections.tenant_id is NULL) and (tbl_block_collections.tenant_id = ? or tbl_block_collections.tenant_id is NULL) ", 0, Blockmodel.UserId, tenantid).Group("tbl_blocks.id").Group("tbl_users.profile_image_path").Order("tbl_blocks.id desc")
+	query := DB.Table("tbl_blocks").Select("tbl_blocks.id,tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("left join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_block_collections.is_deleted = ? and (tbl_block_collections.user_id = ? or  tbl_block_collections.tenant_id is NULL) and (tbl_block_collections.tenant_id = ? or tbl_block_collections.tenant_id is NULL) ", 0, Blockmodel.UserId, tenantid).Group("tbl_blocks.id").Group("tbl_users.profile_image_path").Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -114,7 +116,7 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 // get blocklist
 func (Blockmodel BlockModel) BlockLists(Limit, Offset int, filter Filter, DB *gorm.DB, tenantid int) (block []TblBlock, Totalblock int64, err error) {
 
-	query := DB.Select("tbl_blocks.*,tbl_users.first_name as first_name ,tbl_users.last_name as last_name ,tbl_users.profile_image_path as profile_image_path,tbl_users.username as username").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Where("(tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is NULL) and (tbl_block_collections.tenant_id=? or tbl_block_collections.tenant_id is NULL) ", tenantid, tenantid).Order("tbl_blocks.id desc")
+	query := DB.Debug().Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username, STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value ").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Where("(tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is NULL) and (tbl_block_collections.tenant_id=? or tbl_block_collections.tenant_id is NULL) ", tenantid, tenantid).Group("tbl_blocks.id").Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -234,7 +236,7 @@ func (Blockmodel BlockModel) DeleteCollection(collection TblBlockCollection, DB 
 
 func (Blockmodel BlockModel) CheckCollectionById(collections TblBlockCollection, blockid, userid, tenantid int, DB *gorm.DB) (collection TblBlockCollection, err error) {
 
-	if err := DB.Debug().Table("tbl_block_collections").Where("block_id = ? and user_id = ? and (tenant_id = ? or tenant_id is NULL) ", blockid, userid, tenantid).First(&collections).Error; err != nil {
+	if err := DB.Table("tbl_block_collections").Where("block_id = ? and user_id = ? and (tenant_id = ? or tenant_id is NULL) ", blockid, userid, tenantid).First(&collections).Error; err != nil {
 
 		return TblBlockCollection{}, err
 
