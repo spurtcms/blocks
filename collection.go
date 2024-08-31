@@ -45,35 +45,45 @@ func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlist
 }
 
 // Block list
-func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int) (blocklists []TblBlock, countblock int64, defaultlists []TblBlock, deletecollectionid []TblBlockCollection, err error) {
+func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int) (blocklists []TblBlock, countblock int64, defaultlists []TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return []TblBlock{}, 0, []TblBlock{}, []TblBlockCollection{}, AuthErr
+		return []TblBlock{}, 0, []TblBlock{}, AuthErr
 	}
 
 	Blockmodel.DataAccess = blocks.DataAccess
 
 	Blockmodel.UserId = blocks.UserId
 
-	blocklist, _, err := Blockmodel.BlockLists(limit, offset, filter, blocks.DB, tenantid)
+	var tenantbasedblock []TblBlock
 
-	_, count, _ := Blockmodel.BlockLists(0, 0, filter, blocks.DB, tenantid)
+	var DefaultCollectionList int
+
+	tenantblock, _ := Blockmodel.GetUserBlocks(tenantbasedblock, tenantid, blocks.DB)
+
+	for _, val := range tenantblock {
+		if val.Id == 0 {
+			DefaultCollectionList = 0
+		} else {
+			DefaultCollectionList = 1
+		}
+	}
+
+	blocklist, _, err := Blockmodel.BlockLists(limit, offset, filter, blocks.DB, tenantid, DefaultCollectionList)
+
+	_, count, _ := Blockmodel.BlockLists(0, 0, filter, blocks.DB, tenantid, DefaultCollectionList)
 
 	var deblock []TblBlock
 
 	defaultlist, _ := Blockmodel.GetBlocks(deblock, filter, blocks.DB)
-
-	var collection []TblBlockCollection
-
-	deletecollection, _ := Blockmodel.GetDeleteCollection(collection, tenantid, blocks.DB)
 
 	if err != nil {
 
 		fmt.Println(err)
 	}
 
-	return blocklist, count, defaultlist, deletecollection, nil
+	return blocklist, count, defaultlist, nil
 
 }
 
@@ -96,7 +106,7 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 	block.Prime = Bc.Prime
 	block.CreatedBy = Bc.CreatedBy
 	block.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
-
+	block.IsActive = Bc.IsActive
 	createblock, err := Blockmodel.CreateBlocks(block, blocks.DB)
 
 	if err != nil {
@@ -229,7 +239,7 @@ func (blocks *Block) TagList(filter Filter, tenantid int) (taglists []TblBlockMs
 }
 
 // Remove Collection
-func (blocks *Block) RemoveCollection(id int, tenantid int) error {
+func (blocks *Block) RemoveBlock(id int, tenantid int) error {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -238,15 +248,15 @@ func (blocks *Block) RemoveCollection(id int, tenantid int) error {
 
 	Blockmodel.UserId = blocks.UserId
 
-	var collection TblBlockCollection
+	var block TblBlock
 
-	collection.BlockId = id
-	collection.TenantId = tenantid
-	collection.DeletedBy = blocks.UserId
-	collection.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
-	collection.IsDeleted = 1
+	block.Id = id
+	block.TenantId = tenantid
+	block.DeletedBy = blocks.UserId
+	block.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+	block.IsDeleted = 1
 
-	err := Blockmodel.DeleteCollection(collection, blocks.DB)
+	err := Blockmodel.DeleteBlock(block, blocks.DB)
 
 	if err != nil {
 
@@ -299,24 +309,6 @@ func (blocks *Block) CheckTitleInBlock(title string, tenantid int) (bool, error)
 	return true, nil
 }
 
-// add collection alreay delete collection
-func (blocks *Block) UpdateDeleteCollection(blockid, user_id, tenantid int) error {
-
-	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
-
-		return AuthErr
-	}
-
-	err1 := Blockmodel.UpdateDeleteCollectionById(blockid, user_id, tenantid, blocks.DB)
-
-	if err1 != nil {
-		return err1
-	}
-
-	return nil
-
-}
-
 // last 10 days la add pana block count
 func (blocks *Block) DashBoardBlockCount(tenantid int) (Totalcount int, lcount int, err error) {
 
@@ -342,4 +334,50 @@ func (blocks *Block) DashBoardBlockCount(tenantid int) (Totalcount int, lcount i
 	}
 
 	return int(allblockcount), int(lblockcount), nil
+}
+
+// IsActive functionality in block
+
+func (blocks *Block) BlockIsActive(id int, status int, modifiedby int, tenantid int) (bool, error) {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return false, AuthErr
+	}
+
+	var block TblBlock
+
+	block.ModifiedBy = modifiedby
+
+	block.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+
+	err := Blockmodel.BlcokIsActive(block, id, status, blocks.DB, tenantid)
+
+	if err != nil {
+
+		return false, err
+
+	}
+	return true, nil
+
+}
+
+// Edit Functionality
+func (blocks *Block) BlockEdit(id int, tenantid int) (blockdata TblBlock, err error) {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return TblBlock{}, AuthErr
+	}
+
+	var block TblBlock
+	blockdetails, err := Blockmodel.BlockEdit(block, id, blocks.DB, tenantid)
+
+	if err != nil {
+
+		return TblBlock{}, err
+
+	}
+	return blockdetails, nil
+
 }

@@ -20,6 +20,7 @@ type BlockCreation struct {
 	Prime            int
 	TenantId         int
 	CreatedBy        int
+	IsActive         int
 }
 
 type MasterTagCreate struct {
@@ -52,8 +53,14 @@ type TblBlock struct {
 	IconImage        string    `gorm:"type:character varying"`
 	TenantId         int       `gorm:"type:integer"`
 	Prime            int       `gorm:"type:integer"`
+	IsActive         int       `gorm:"type:integer"`
 	CreatedOn        time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
 	CreatedBy        int       `gorm:"type:integer"`
+	ModifiedBy       int       `gorm:"type:integer"`
+	ModifiedOn       time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
+	DeletedOn        time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
+	DeletedBy        int       `gorm:"type:integer;DEFAULT:NULL"`
+	IsDeleted        int       `gorm:"type:integer;DEFAULT:0"`
 	ProfileImagePath string    `gorm:"<-:false"`
 	FirstName        string    `gorm:"<-:false"`
 	LastName         string    `gorm:"<-:false"`
@@ -114,14 +121,24 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 }
 
 // get blocklist
-func (Blockmodel BlockModel) BlockLists(Limit, Offset int, filter Filter, DB *gorm.DB, tenantid int) (block []TblBlock, Totalblock int64, err error) {
+func (Blockmodel BlockModel) BlockLists(Limit, Offset int, filter Filter, DB *gorm.DB, tenantid, DefaultCollectionList int) (block []TblBlock, Totalblock int64, err error) {
 
-	query := DB.Debug().Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username, STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value ").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Where("(tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is NULL) and (tbl_block_collections.tenant_id=? or tbl_block_collections.tenant_id is NULL) ", tenantid, tenantid).Group("tbl_blocks.id").Order("tbl_blocks.id desc")
+	query := DB.Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username, STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value ").Table("tbl_blocks").Joins("left join tbl_users on tbl_users.id = tbl_blocks.created_by").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_blocks.is_deleted = ? and (tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is NULL) ", 0, tenantid).Group("tbl_blocks.id").Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
 		query = query.Where("LOWER(TRIM(tbl_blocks.title)) LIKE LOWER(TRIM(?))  ", "%"+filter.Keyword+"%")
 
+	}
+
+	if DefaultCollectionList == 0 {
+
+		query = query.Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Where("tbl_block_collections.tenant_id is NULL")
+	}
+
+	if DefaultCollectionList == 1 {
+
+		query = query.Where("tbl_blocks.tenant_id=?", tenantid)
 	}
 
 	if Blockmodel.DataAccess == 1 {
@@ -220,9 +237,9 @@ func (Blockmodel BlockModel) TagLists(filter Filter, DB *gorm.DB, tenantid int) 
 }
 
 // Delete Collection
-func (Blockmodel BlockModel) DeleteCollection(collection TblBlockCollection, DB *gorm.DB) error {
+func (Blockmodel BlockModel) DeleteBlock(block TblBlock, DB *gorm.DB) error {
 
-	if err := DB.Table("tbl_block_collections").Where("block_id = ? and (tenant_id = ? or tenant_id is NULL ) ", collection.BlockId, collection.TenantId).UpdateColumns(map[string]interface{}{"is_deleted": collection.IsDeleted, "deleted_by": collection.DeletedBy, "deleted_on": collection.DeletedOn}).Error; err != nil {
+	if err := DB.Table("tbl_blocks").Where("id = ? and (tenant_id = ? or tenant_id is NULL ) ", block.Id, block.TenantId).UpdateColumns(map[string]interface{}{"is_deleted": block.IsDeleted, "deleted_by": block.DeletedBy, "deleted_on": block.DeletedOn}).Error; err != nil {
 
 		return err
 
@@ -278,15 +295,15 @@ func (Blockmodel BlockModel) CheckTitleInBlock(block *TblBlock, title string, DB
 
 // get delete collection blockid
 
-func (Blockmodel BlockModel) GetDeleteCollection(collections []TblBlockCollection, tenantid int, DB *gorm.DB) (collection []TblBlockCollection, err error) {
+func (Blockmodel BlockModel) GetUserBlocks(blocks []TblBlock, tenantid int, DB *gorm.DB) (block []TblBlock, err error) {
 
-	if err := DB.Table("tbl_block_collections").Where("tbl_block_collections.is_deleted = 1 and (tenant_id = ? or tenant_id is NULL) ", tenantid).Find(&collections).Error; err != nil {
+	if err := DB.Table("tbl_blocks").Where("tbl_blocks.is_deleted = 0 and tenant_id = ? ", tenantid).Find(&blocks).Error; err != nil {
 
-		return []TblBlockCollection{}, err
+		return []TblBlock{}, err
 
 	}
 
-	return collections, nil
+	return blocks, nil
 
 }
 
@@ -327,4 +344,28 @@ func (Blockmodel BlockModel) NewBlockCount(DB *gorm.DB, tenantid int) (count int
 
 	return count, nil
 
+}
+
+// Block is active
+
+func (Blockmodel BlockModel) BlcokIsActive(blockstatus TblBlock, id int, status int, DB *gorm.DB, tenantid int) error {
+
+	if err := DB.Debug().Table("tbl_blocks").Where("id=? and (tenant_id is NULL or tenant_id=?)", id, tenantid).UpdateColumns(map[string]interface{}{"is_active": status, "modified_by": blockstatus.ModifiedBy, "modified_on": blockstatus.ModifiedOn}).Error; err != nil {
+
+		return err
+	}
+
+	return nil
+}
+
+// Edit functionality
+
+func (Blockmodel BlockModel) BlockEdit(block TblBlock, id int, DB *gorm.DB, tenantid int) (blockdata TblBlock, err error) {
+
+	if err := DB.Table("tbl_blocks").Where("id=? and (tenant_id is NULL or tenant_id=?)", id, tenantid).First(&block).Error; err != nil {
+
+		return TblBlock{}, err
+	}
+
+	return block, nil
 }
