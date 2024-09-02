@@ -20,6 +20,7 @@ type BlockCreation struct {
 	Prime            int
 	TenantId         int
 	CreatedBy        int
+	ModifiedBy       int
 	IsActive         int
 }
 
@@ -101,7 +102,7 @@ type TblBlockCollection struct {
 // get collectionlist
 func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int) (collection []TblBlock, err error) {
 
-	query := DB.Table("tbl_blocks").Select("tbl_blocks.id,tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("left join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_block_collections.is_deleted = ? and (tbl_block_collections.user_id = ? or  tbl_block_collections.tenant_id is NULL) and (tbl_block_collections.tenant_id = ? or tbl_block_collections.tenant_id is NULL) ", 0, Blockmodel.UserId, tenantid).Group("tbl_blocks.id").Group("tbl_users.profile_image_path").Order("tbl_blocks.id desc")
+	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.id,tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("left join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_block_collections.is_deleted = ? and (tbl_block_collections.user_id = ? or  tbl_block_collections.tenant_id is NULL) and (tbl_block_collections.tenant_id = ? or tbl_block_collections.tenant_id is NULL) ", 0, Blockmodel.UserId, tenantid).Group("tbl_blocks.id").Group("tbl_users.profile_image_path").Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -283,11 +284,18 @@ func (Blockmodel BlockModel) GetBlocks(block []TblBlock, filter Filter, DB *gorm
 
 // check block title is alreay exists
 
-func (Blockmodel BlockModel) CheckTitleInBlock(block *TblBlock, title string, DB *gorm.DB, tenantid int) error {
+func (Blockmodel BlockModel) CheckTitleInBlock(block *TblBlock, title string, DB *gorm.DB, id, tenantid int) error {
 
-	if err := DB.Table("tbl_blocks").Where("LOWER(TRIM(title))=LOWER(TRIM(?)) and (tenant_id = ? or tenant_id is NULL  )", title, tenantid).First(&block).Error; err != nil {
+	if id == 0 {
+		if err := DB.Table("tbl_blocks").Where("LOWER(TRIM(title))=LOWER(TRIM(?)) and (tenant_id = ? or tenant_id is NULL  ) and is_deleted = 0", title, tenantid).First(&block).Error; err != nil {
 
-		return err
+			return err
+		}
+	} else {
+		if err := DB.Table("tbl_blocks").Where("LOWER(TRIM(title))=LOWER(TRIM(?)) and (tenant_id = ? or tenant_id is NULL  ) and is_deleted = 0 and tbl_blocks.id not in (?)", title, tenantid, id).First(&block).Error; err != nil {
+
+			return err
+		}
 	}
 
 	return nil
@@ -304,20 +312,6 @@ func (Blockmodel BlockModel) GetUserBlocks(blocks []TblBlock, tenantid int, DB *
 	}
 
 	return blocks, nil
-
-}
-
-// Add delete collection in again our collection
-
-func (Blockmodel BlockModel) UpdateDeleteCollectionById(blockid, user_id, tenantid int, DB *gorm.DB) (err error) {
-
-	if err := DB.Table("tbl_block_collections").Where("tbl_block_collections.block_id = ? and tbl_block_collections.user_id = ? and (tenant_id = ? or tenant_id is NULL) ", blockid, user_id, tenantid).UpdateColumns(map[string]interface{}{"is_deleted": 0}).Error; err != nil {
-
-		return err
-
-	}
-
-	return nil
 
 }
 
@@ -350,7 +344,7 @@ func (Blockmodel BlockModel) NewBlockCount(DB *gorm.DB, tenantid int) (count int
 
 func (Blockmodel BlockModel) BlcokIsActive(blockstatus TblBlock, id int, status int, DB *gorm.DB, tenantid int) error {
 
-	if err := DB.Debug().Table("tbl_blocks").Where("id=? and (tenant_id is NULL or tenant_id=?)", id, tenantid).UpdateColumns(map[string]interface{}{"is_active": status, "modified_by": blockstatus.ModifiedBy, "modified_on": blockstatus.ModifiedOn}).Error; err != nil {
+	if err := DB.Table("tbl_blocks").Where("id=? and (tenant_id is NULL or tenant_id=?)", id, tenantid).UpdateColumns(map[string]interface{}{"is_active": status, "modified_by": blockstatus.ModifiedBy, "modified_on": blockstatus.ModifiedOn}).Error; err != nil {
 
 		return err
 	}
@@ -362,10 +356,36 @@ func (Blockmodel BlockModel) BlcokIsActive(blockstatus TblBlock, id int, status 
 
 func (Blockmodel BlockModel) BlockEdit(block TblBlock, id int, DB *gorm.DB, tenantid int) (blockdata TblBlock, err error) {
 
-	if err := DB.Table("tbl_blocks").Where("id=? and (tenant_id is NULL or tenant_id=?)", id, tenantid).First(&block).Error; err != nil {
+	if err := DB.Select("tbl_blocks.*,STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value").Table("tbl_blocks").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_blocks.id=? and (tbl_blocks.tenant_id is NULL or tbl_blocks.tenant_id=?)", id, tenantid).Group("tbl_blocks.id").First(&block).Error; err != nil {
 
 		return TblBlock{}, err
 	}
 
 	return block, nil
+}
+
+// Update Functionality
+
+func (Blockmodel BlockModel) UpdateBlock(block TblBlock, id int, DB *gorm.DB) error {
+
+	if err := DB.Debug().Table("tbl_blocks").Where("tbl_blocks.id=? and (tbl_blocks.tenant_id is NULL or tbl_blocks.tenant_id=?)", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "block_css": block.BlockCss, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime, "cover_image": block.CoverImage}).Error; err != nil {
+
+		return err
+	}
+
+	return nil
+}
+
+// Delete Functionality
+
+func (Blockmodel BlockModel) DeleteBlockCollection(blockcollection TblBlockCollection, DB *gorm.DB) error {
+
+	if err := DB.Table("tbl_block_collections").Where("block_id = ? and (tenant_id = ? or tenant_id is NULL ) ", blockcollection.BlockId, blockcollection.TenantId).UpdateColumns(map[string]interface{}{"is_deleted": blockcollection.IsDeleted, "deleted_by": blockcollection.DeletedBy, "deleted_on": blockcollection.DeletedOn}).Error; err != nil {
+
+		return err
+
+	}
+
+	return nil
+
 }

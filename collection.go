@@ -258,6 +258,20 @@ func (blocks *Block) RemoveBlock(id int, tenantid int) error {
 
 	err := Blockmodel.DeleteBlock(block, blocks.DB)
 
+	var collection TblBlockCollection
+
+	collection.BlockId = id
+	collection.TenantId = tenantid
+	collection.DeletedBy = blocks.UserId
+	collection.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+	collection.IsDeleted = 1
+
+	err1 := Blockmodel.DeleteBlockCollection(collection, blocks.DB)
+
+	if err1 != nil {
+		return err1
+	}
+
 	if err != nil {
 
 		return err
@@ -289,7 +303,7 @@ func (blocks *Block) CheckCollection(blockid, user_id, tenantid int) (flg TblBlo
 
 // check block title is alreay exists
 
-func (blocks *Block) CheckTitleInBlock(title string, tenantid int) (bool, error) {
+func (blocks *Block) CheckTitleInBlock(title string, id, tenantid int) (bool, error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -298,7 +312,7 @@ func (blocks *Block) CheckTitleInBlock(title string, tenantid int) (bool, error)
 
 	var tblblocks TblBlock
 
-	err := Blockmodel.CheckTitleInBlock(&tblblocks, title, blocks.DB, tenantid)
+	err := Blockmodel.CheckTitleInBlock(&tblblocks, title, blocks.DB, id, tenantid)
 
 	if err != nil {
 
@@ -379,5 +393,35 @@ func (blocks *Block) BlockEdit(id int, tenantid int) (blockdata TblBlock, err er
 
 	}
 	return blockdetails, nil
+
+}
+
+// Update Functionality
+func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation) error {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return AuthErr
+	}
+
+	var block TblBlock
+
+	block.BlockContent = updateblock.BlockContent
+	block.Title = updateblock.Title
+	block.BlockCss = updateblock.BlockCss
+	block.CoverImage = updateblock.CoverImage
+	block.ModifiedBy = updateblock.ModifiedBy
+	block.IsActive = updateblock.IsActive
+	block.Prime = updateblock.Prime
+	block.TenantId = updateblock.TenantId
+	block.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+	err := Blockmodel.UpdateBlock(block, id, blocks.DB)
+
+	if err != nil {
+
+		return err
+
+	}
+	return nil
 
 }
