@@ -258,20 +258,6 @@ func (blocks *Block) RemoveBlock(id int, tenantid int) error {
 
 	err := Blockmodel.DeleteBlock(block, blocks.DB)
 
-	var collection TblBlockCollection
-
-	collection.BlockId = id
-	collection.TenantId = tenantid
-	collection.DeletedBy = blocks.UserId
-	collection.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
-	collection.IsDeleted = 1
-
-	err1 := Blockmodel.DeleteBlockCollection(collection, blocks.DB)
-
-	if err1 != nil {
-		return err1
-	}
-
 	if err != nil {
 
 		return err
@@ -421,6 +407,58 @@ func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation) error {
 
 		return err
 
+	}
+	return nil
+
+}
+
+// Delete Collection
+
+func (blocks *Block) DeleteCollection(id, tenantid int) error {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return AuthErr
+	}
+
+	var collection TblBlockCollection
+
+	collection.BlockId = id
+	collection.TenantId = tenantid
+	collection.DeletedBy = blocks.UserId
+	collection.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+	collection.IsDeleted = 1
+
+	err1 := Blockmodel.DeleteBlockCollection(collection, blocks.DB)
+
+	if err1 != nil {
+		return err1
+	}
+	return nil
+}
+
+// Delete tag in tbl_block_tags
+
+func (blocks *Block) DeleteTags(id int, name string, tenantid int) error {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return AuthErr
+	}
+
+	var tag TblBlockTags
+
+	tag.BlockId = id
+	tag.TagName = name
+	tag.TenantId = tenantid
+	tag.DeletedBy = blocks.UserId
+	tag.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+	tag.IsDeleted = 1
+
+	err1 := Blockmodel.DeleteTag(tag, blocks.DB)
+
+	if err1 != nil {
+		return err1
 	}
 	return nil
 
