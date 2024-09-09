@@ -263,6 +263,20 @@ func (blocks *Block) RemoveBlock(id int, tenantid int) error {
 		return err
 	}
 
+	var collection TblBlockCollection
+
+	collection.BlockId = id
+	collection.TenantId = tenantid
+	collection.DeletedBy = blocks.UserId
+	collection.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+	collection.IsDeleted = 1
+
+	err1 := Blockmodel.DeleteBlockCollection(collection, blocks.DB)
+
+	if err1 != nil {
+		return err1
+	}
+
 	return nil
 
 }

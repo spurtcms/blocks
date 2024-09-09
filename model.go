@@ -274,7 +274,7 @@ func (Blockmodel BlockModel) CheckCollectionById(collections TblBlockCollection,
 
 func (Blockmodel BlockModel) GetBlocks(block []TblBlock, filter Filter, DB *gorm.DB) (blocks []TblBlock, err error) {
 
-	query := DB.Debug().Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username,(case when (select id from tbl_block_collections where tbl_block_collections.block_id = tbl_blocks.id and is_deleted = 0 and tbl_blocks.tenant_id is NULL  limit 1) is not null then 'true' else 'false' end) as actions ").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_blocks.tenant_id is NULL and tbl_blocks.id != 1 ").Group("tbl_blocks.id")
+	query := DB.Debug().Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username,(case when (select id from tbl_block_collections where tbl_block_collections.block_id = tbl_blocks.id and is_deleted = 0 and user_id = ? and tbl_blocks.tenant_id is NULL  limit 1) is not null then 'true' else 'false' end) as actions ", Blockmodel.UserId).Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_blocks.tenant_id is NULL and tbl_blocks.id != 1 ").Group("tbl_blocks.id")
 
 	if filter.Keyword != "" {
 
