@@ -45,45 +45,52 @@ func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlist
 }
 
 // Block list
-func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int) (blocklists []TblBlock, countblock int64, defaultlists []TblBlock, err error) {
+func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int) (blocklists []TblBlock, countblock int64, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return []TblBlock{}, 0, []TblBlock{}, AuthErr
+		return []TblBlock{}, 0, AuthErr
 	}
 
 	Blockmodel.DataAccess = blocks.DataAccess
 
 	Blockmodel.UserId = blocks.UserId
 
-	var tenantbasedblock []TblBlock
+	blocklist, _, err := Blockmodel.BlockLists(limit, offset, filter, blocks.DB, tenantid)
 
-	var DefaultCollectionList int
-
-	tenantblock, _ := Blockmodel.GetUserBlocks(tenantbasedblock, tenantid, blocks.DB)
-
-	for _, val := range tenantblock {
-		if val.Id == 0 {
-			DefaultCollectionList = 0
-		} else {
-			DefaultCollectionList = 1
-		}
-	}
-
-	blocklist, _, err := Blockmodel.BlockLists(limit, offset, filter, blocks.DB, tenantid, DefaultCollectionList)
-
-	_, count, _ := Blockmodel.BlockLists(0, 0, filter, blocks.DB, tenantid, DefaultCollectionList)
-
-	var deblock []TblBlock
-
-	defaultlist, _ := Blockmodel.GetBlocks(deblock, filter, blocks.DB)
+	_, count, _ := Blockmodel.BlockLists(0, 0, filter, blocks.DB, tenantid)
 
 	if err != nil {
 
 		fmt.Println(err)
 	}
 
-	return blocklist, count, defaultlist, nil
+	return blocklist, count, nil
+
+}
+
+// Default Block list
+func (blocks *Block) DefaultBlockList(limit, offset int, filter Filter, tenantid int) (blocklists []TblBlock, countblock int64, err error) {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return []TblBlock{}, 0, AuthErr
+	}
+
+	Blockmodel.DataAccess = blocks.DataAccess
+
+	Blockmodel.UserId = blocks.UserId
+
+	blocklist, _, err := Blockmodel.DefaultBlockLists(limit, offset, filter, blocks.DB, tenantid)
+
+	_, count, _ := Blockmodel.DefaultBlockLists(0, 0, filter, blocks.DB, tenantid)
+
+	if err != nil {
+
+		fmt.Println(err)
+	}
+
+	return blocklist, count, nil
 
 }
 
