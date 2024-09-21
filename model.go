@@ -126,9 +126,9 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 }
 
 // get blocklist
-func (Blockmodel BlockModel) BlockLists(Limit, Offset int, filter Filter, DB *gorm.DB, tenantid int) (block []TblBlock, Totalblock int64, err error) {
+func (Blockmodel BlockModel) BlockLists(limit, offset int, filter Filter, DB *gorm.DB, tenantid int) (block []TblBlock, Totalblock int64, err error) {
 
-	query := DB.Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username, STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value ,(case when (select id from tbl_block_collections where tbl_block_collections.block_id = tbl_blocks.id and is_deleted = 0 limit 1) is not null then 'true' else 'false' end ) as actions ").Table("tbl_blocks").Joins("left join tbl_users on tbl_users.id = tbl_blocks.created_by").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_blocks.is_deleted = ? and tbl_block_tags.is_deleted = ? and (tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is NULL) ", 0, 0, tenantid).Group("tbl_blocks.id").Order("tbl_blocks.id desc")
+	query := DB.Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username, STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value ,(case when (select id from tbl_block_collections where tbl_block_collections.block_id = tbl_blocks.id and is_deleted = 0 limit 1) is not null then 'true' else 'false' end ) as actions ").Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_blocks.is_deleted = ? and tbl_block_tags.is_deleted = ? and (tbl_blocks.tenant_id=? or tbl_blocks.tenant_id is NULL) ", 0, 0, tenantid).Group("tbl_blocks.id").Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -141,9 +141,9 @@ func (Blockmodel BlockModel) BlockLists(Limit, Offset int, filter Filter, DB *go
 		query = query.Where("tbl_blocks.created_by=?", Blockmodel.UserId)
 	}
 
-	if Limit != 0 {
+	if limit != 0 {
 
-		query.Limit(Limit).Offset(Offset).Find(&block)
+		query.Limit(limit).Offset(offset).Find(&block)
 
 		return block, 0, err
 
@@ -156,9 +156,9 @@ func (Blockmodel BlockModel) BlockLists(Limit, Offset int, filter Filter, DB *go
 }
 
 // get dafault blocklist
-func (Blockmodel BlockModel) DefaultBlockLists(Limit, Offset int, filter Filter, DB *gorm.DB, tenantid int) (dafaultblock []TblBlock, Totaldefaultblock int64, err error) {
+func (Blockmodel BlockModel) DefaultBlockLists(limit, offset int, filter Filter, DB *gorm.DB, tenantid int) (dafaultblock []TblBlock, Totaldefaultblock int64, err error) {
 
-	query := DB.Debug().Select("tbl_blocks.*,STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username,(case when (select id from tbl_block_collections where tbl_block_collections.block_id = tbl_blocks.id and is_deleted = 0 and user_id = ? and tbl_blocks.tenant_id is NULL  limit 1) is not null then 'true' else 'false' end) as actions ", Blockmodel.UserId).Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_blocks.tenant_id is NULL and tbl_blocks.id != 1 and tbl_block_tags.is_deleted = ? ", 0).Group("tbl_blocks.id")
+	query := DB.Debug().Select("tbl_blocks.*,STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value,max(tbl_users.id),max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username,(case when (select id from tbl_block_collections where tbl_block_collections.block_id = tbl_blocks.id and is_deleted = 0 and user_id = ? and tbl_blocks.tenant_id = ? limit 1) is not null then 'true' else 'false' end) as actions ", Blockmodel.UserId, tenantid).Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_blocks.tenant_id = ? and  tbl_blocks.created_by not in (?)  and tbl_block_tags.is_deleted = ? ", tenantid, Blockmodel.UserId, 0).Group("tbl_blocks.id").Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -171,9 +171,9 @@ func (Blockmodel BlockModel) DefaultBlockLists(Limit, Offset int, filter Filter,
 		query = query.Where("tbl_blocks.created_by=?", Blockmodel.UserId)
 	}
 
-	if Limit != 0 {
+	if limit != 0 {
 
-		query.Limit(Limit).Offset(Offset).Find(&dafaultblock)
+		query.Limit(limit).Offset(offset).Find(&dafaultblock)
 
 		return dafaultblock, 0, err
 
@@ -287,24 +287,6 @@ func (Blockmodel BlockModel) CheckCollectionById(collections TblBlockCollection,
 	}
 
 	return collections, nil
-
-}
-
-// get null block
-
-func (Blockmodel BlockModel) GetBlocks(block []TblBlock, filter Filter, DB *gorm.DB) (blocks []TblBlock, err error) {
-
-	query := DB.Debug().Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username,(case when (select id from tbl_block_collections where tbl_block_collections.block_id = tbl_blocks.id and is_deleted = 0 and user_id = ? and tbl_blocks.tenant_id is NULL  limit 1) is not null then 'true' else 'false' end) as actions ", Blockmodel.UserId).Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_blocks.tenant_id is NULL and tbl_blocks.id != 1 ").Group("tbl_blocks.id")
-
-	if filter.Keyword != "" {
-
-		query = query.Where("LOWER(TRIM(tbl_blocks.title)) LIKE LOWER(TRIM(?))  ", "%"+filter.Keyword+"%")
-
-	}
-
-	query.Find(&block)
-
-	return block, nil
 
 }
 
