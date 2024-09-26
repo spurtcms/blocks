@@ -126,7 +126,7 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 }
 
 // Check tag name is already exists
-func (blocks *Block) CheckTagName(tagname string) (flg TblBlockMstrTag, err error) {
+func (blocks *Block) CheckTagName(tagname string, tenantid int) (flg TblBlockMstrTag, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -135,7 +135,7 @@ func (blocks *Block) CheckTagName(tagname string) (flg TblBlockMstrTag, err erro
 
 	var block TblBlockMstrTag
 
-	tag, err1 := Blockmodel.TagNameCheck(tagname, blocks.DB, block)
+	tag, err1 := Blockmodel.TagNameCheck(tagname, blocks.DB, block, tenantid)
 
 	if err1 != nil {
 		return TblBlockMstrTag{}, err
@@ -289,22 +289,22 @@ func (blocks *Block) RemoveBlock(id int, tenantid int) error {
 }
 
 // Check collection  already exists
-func (blocks *Block) CheckCollection(blockid, user_id, tenantid int) (flg TblBlockCollection, err error) {
+func (blocks *Block) CheckCollection(blockid, user_id, tenantid int) (flg bool, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return TblBlockCollection{}, AuthErr
+		return false, AuthErr
 	}
 
 	var block TblBlockCollection
 
-	tag, err1 := Blockmodel.CheckCollectionById(block, blockid, user_id, tenantid, blocks.DB)
+	flg, err1 := Blockmodel.CheckCollectionById(block, blockid, user_id, tenantid, blocks.DB)
 
 	if err1 != nil {
-		return TblBlockCollection{}, err
+		return false, err
 	}
 
-	return tag, nil
+	return flg, nil
 
 }
 
