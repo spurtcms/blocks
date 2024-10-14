@@ -244,7 +244,7 @@ func (Blockmodel BlockModel) CreateBlockCollection(collection TblBlockCollection
 // get taglist
 func (Blockmodel BlockModel) TagLists(filter Filter, DB *gorm.DB, tenantid int) (tags []TblBlockMstrTag, err error) {
 
-	query := DB.Table("tbl_block_mstr_tags").Where("tbl_block_mstr_tags.tenant_id=? or tbl_block_mstr_tags.tenant_id is NULL ", tenantid).Order("tbl_block_mstr_tags.id desc")
+	query := DB.Table("tbl_block_mstr_tags").Where("tbl_block_mstr_tags.tenant_id = ? ", tenantid).Order("tbl_block_mstr_tags.id desc")
 
 	if filter.Keyword != "" {
 
@@ -352,7 +352,7 @@ func (Blockmodel BlockModel) NewBlockCount(DB *gorm.DB, tenantid int) (count int
 
 func (Blockmodel BlockModel) BlcokIsActive(blockstatus TblBlock, id int, status int, DB *gorm.DB, tenantid int) error {
 
-	if err := DB.Table("tbl_blocks").Where("id=? and  or tenant_id=?", id, tenantid).UpdateColumns(map[string]interface{}{"is_active": status, "modified_by": blockstatus.ModifiedBy, "modified_on": blockstatus.ModifiedOn}).Error; err != nil {
+	if err := DB.Table("tbl_blocks").Where("id=? and tenant_id=?", id, tenantid).UpdateColumns(map[string]interface{}{"is_active": status, "modified_by": blockstatus.ModifiedBy, "modified_on": blockstatus.ModifiedOn}).Error; err != nil {
 
 		return err
 	}
