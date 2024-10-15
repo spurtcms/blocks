@@ -7,18 +7,20 @@ import (
 )
 
 type TblBlock struct {
-	Id               int       `gorm:"primaryKey;auto_increment;type:serial"`
-	Title            string    `gorm:"type:character varying"`
-	BlockDescription string    `gorm:"type:text"`
-	BlockContent     string    `gorm:"type:text"`
-	BlockCss         string    `gorm:"type:text"`
-	CoverImage       string    `gorm:"type:character varying"`
-	IconImage        string    `gorm:"type:character varying"`
-	Free             int       `gorm:"type:integer"`
-	Prime            int       `gorm:"type:integer"`
-	TenantId         int       `gorm:"type:integer"`
-	CreatedOn        time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
-	CreatedBy        int       `gorm:"type:integer"`
+	Id           int       `gorm:"primaryKey;auto_increment;type:serial"`
+	Title        string    `gorm:"type:character varying"`
+	BlockContent string    `gorm:"type:text"`
+	CoverImage   string    `gorm:"type:character varying"`
+	Prime        int       `gorm:"type:integer"`
+	IsActive     int       `gorm:"type:integer"`
+	TenantId     int       `gorm:"type:integer"`
+	CreatedOn    time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
+	CreatedBy    int       `gorm:"type:integer"`
+	ModifiedBy   int       `gorm:"type:integer"`
+	ModifiedOn   time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
+	DeletedOn    time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
+	DeletedBy    int       `gorm:"type:integer;DEFAULT:NULL"`
+	IsDeleted    int       `gorm:"type:integer;DEFAULT:0"`
 }
 
 type TblBlockTags struct {
@@ -29,6 +31,9 @@ type TblBlockTags struct {
 	TenantId  int       `gorm:"type:integer"`
 	CreatedOn time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
 	CreatedBy int       `gorm:"type:integer"`
+	DeletedOn time.Time `gorm:"type:timestamp without time zone;DEFAULT:NULL"`
+	DeletedBy int       `gorm:"type:integer;DEFAULT:NULL"`
+	IsDeleted int       `gorm:"type:integer;DEFAULT:0"`
 }
 
 type TblBlockMstrTag struct {

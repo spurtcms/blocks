@@ -284,6 +284,20 @@ func (blocks *Block) RemoveBlock(id int, tenantid int) error {
 		return err1
 	}
 
+	var tags TblBlockTags
+
+	tags.BlockId = id
+	tags.TenantId = tenantid
+	tags.DeletedBy = blocks.UserId
+	tags.DeletedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+	tags.IsDeleted = 1
+
+	err2 := Blockmodel.BlockDeleteTag(tags, blocks.DB)
+
+	if err2 != nil {
+		return err2
+	}
+
 	return nil
 
 }
