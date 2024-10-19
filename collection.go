@@ -23,7 +23,7 @@ func BlockSetup(config Config) *Block {
 }
 
 /* Collection List*/
-// pass limit , offset get collectionlist
+// pass limit, offset get collectionlist
 func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlists []TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
@@ -472,7 +472,7 @@ func (blocks *Block) DeleteCollection(id, tenantid int) error {
 	return nil
 }
 
-// Delete tag in tbl_block_tags
+// Delete tag in tbl_block_tags table
 
 func (blocks *Block) DeleteTags(id int, name string, tenantid int) error {
 
