@@ -1,6 +1,16 @@
 # Blocks
+spurtCMS includes a flexible and modular blocks system to allow users to build dynamic, reusable sections for their websites. Blocks can be customized, reused, and combined to create powerful page layouts.
 
-# forms-builders
+
+## Features
+
+- Blocks are self-contained components that can be reused across pages.
+- Users can easily rearrange blocks within a page using drag-and-drop interfaces.
+- Reusable Blocks: Create blocks once and use them across multiple pages or posts
+- Simplifies layout customization without needing technical skills.
+
+
+
 
 # Installation
 
@@ -116,4 +126,4 @@ func main() {
 
 ```
 # Getting help
-If you encounter a problem with the package,please refer [Please refer [(https://www.spurtcms.com/documentation/cms-admin)] or you can create a new Issue in this repo[https://github.com/spurtcms/blocks/issues]. 
+If you encounter a problem with the package,please refer [Please refer [(https://dev.spurtcms.com/documentation)] or you can create a new Issue in this repo[https://github.com/spurtcms/blocks/issues]. 
