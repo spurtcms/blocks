@@ -322,6 +322,85 @@ func (blocks *Block) CheckCollection(blockid, user_id, tenantid int) (flg bool, 
 
 }
 
+func (blocks *Block) Addblocktomycollecton(id int, tenantid int, userid int) (bool, error) {
+
+	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
+
+		return false, AuthErr
+	}
+
+	var Block TblBlock
+
+	err := Blockmodel.GetBlocks(id, blocks.DB, &Block)
+
+	if err != nil {
+		fmt.Println("Add to mycollection contain error,line 338", err)
+	}
+
+	myblock := TblBlock{
+		Title:            Block.Title,
+		BlockDescription: Block.BlockDescription,
+		BlockContent:     Block.BlockContent,
+		BlockCss:         Block.BlockCss,
+		IconImage:        Block.IconImage,
+		CoverImage:       Block.CoverImage,
+		Prime:            Block.Prime,
+		IsActive:         Block.IsActive,
+		CreatedOn:        Block.CreatedOn,
+		CreatedBy:        userid,
+		ModifiedBy:       Block.ModifiedBy,
+		DeletedOn:        Block.DeletedOn,
+		DeletedBy:        Block.DeletedBy,
+		IsDeleted:        Block.IsDeleted,
+		TenantId:         tenantid,
+	}
+
+	// Blockmodel.AddToMycollection(myblock, blocks.DB)
+
+	blockdata, err2 := Blockmodel.CreateBlocks(myblock, blocks.DB)
+
+	if err2 != nil {
+		fmt.Println("block err", err)
+	}
+
+	var block TblBlockMstrTag
+
+	tag, err1 := Blockmodel.TagNameCheck("default", blocks.DB, block, tenantid)
+
+	if err1 != nil {
+		return false, err
+	}
+
+	TagCreate := CreateTag{
+		BlockId:   blockdata.Id,
+		TagId:     tag.Id,
+		TagName:   tag.TagTitle,
+		CreatedBy: userid,
+	}
+
+	var tags TblBlockTags
+	tags.BlockId = TagCreate.BlockId
+	tags.TagId = TagCreate.TagId
+	tags.TagName = TagCreate.TagName
+	tags.TenantId = tenantid
+	tags.CreatedBy = TagCreate.CreatedBy
+	tags.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+
+	Blockmodel.CreateBlockTag(tags, blocks.DB)
+
+	var collection TblBlockCollection
+
+	collection.BlockId = blockdata.Id
+	collection.UserId = userid
+	collection.TenantId = tenantid
+	collection.DeletedBy = userid
+	collection.IsDeleted = blockdata.IsDeleted
+
+	Blockmodel.CreateBlockCollection(collection, blocks.DB)
+
+	return true, nil
+}
+
 // check block title is alreay exists
 
 func (blocks *Block) CheckTitleInBlock(title string, id, tenantid int) (bool, error) {
