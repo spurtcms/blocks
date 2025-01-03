@@ -191,14 +191,14 @@ func (Blockmodel BlockModel) DefaultBlockLists(limit, offset int, filter Filter,
 
 	if dbName == "postgres" {
 
-		query = DB.Select("tbl_blocks.*,max(tbl_users.id),max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username")
+		query = DB.Select("tbl_blocks.*,max(tbl_users.id),max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username, STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value")
 
 	} else if dbName == "mysql" {
 
 		query = DB.Select("tbl_blocks.*,GROUP_CONCAT(tbl_block_tags.tag_name ORDER BY tbl_block_tags.tag_name SEPARATOR ', ') AS tag_value ,max(tbl_users.id),max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username")
 	}
 
-	query = query.Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_blocks.tenant_id is NULL").Group("tbl_blocks.id").Order("tbl_blocks.id desc")
+	query = query.Table("tbl_blocks").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Joins("inner join tbl_block_tags ON tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_blocks.tenant_id is NULL").Group("tbl_blocks.id").Order("tbl_blocks.id desc")
 	if filter.Keyword != "" {
 
 		query = query.Where("LOWER(TRIM(tbl_blocks.title)) LIKE LOWER(TRIM(?))  ", "%"+filter.Keyword+"%")
