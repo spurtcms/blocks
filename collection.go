@@ -336,7 +336,8 @@ func (blocks *Block) Addblocktomycollecton(id int, tenantid int, userid int) (bo
 	if err != nil {
 		fmt.Println("Add to mycollection contain error,line 338", err)
 	}
-
+	currenttime,_:=time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+	
 	myblock := TblBlock{
 		Title:            Block.Title,
 		BlockDescription: Block.BlockDescription,
@@ -346,7 +347,7 @@ func (blocks *Block) Addblocktomycollecton(id int, tenantid int, userid int) (bo
 		CoverImage:       Block.CoverImage,
 		Prime:            Block.Prime,
 		IsActive:         Block.IsActive,
-		CreatedOn:        Block.CreatedOn,
+		CreatedOn:        currenttime,
 		CreatedBy:        userid,
 		ModifiedBy:       Block.ModifiedBy,
 		DeletedOn:        Block.DeletedOn,
