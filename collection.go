@@ -24,7 +24,7 @@ func BlockSetup(config Config) *Block {
 
 /* Collection List*/
 // pass limit, offset get collectionlist
-func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlists []TblBlock, err error) {
+func (blocks *Block) CollectionList(filter Filter, tenantid int,channelid int) (collectionlists []TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -35,7 +35,7 @@ func (blocks *Block) CollectionList(filter Filter, tenantid int) (collectionlist
 
 	Blockmodel.UserId = blocks.UserId
 
-	collectionlist, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid)
+	collectionlist, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid,channelid)
 
 	if err != nil {
 
@@ -95,7 +95,7 @@ func (blocks *Block) DefaultBlockList(limit, offset int, filter Filter, tenantid
 }
 
 // Create Blog
-func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err error) {
+func (blocks *Block) CreateBlock(Bc BlockCreation,chname string,chid int) (createblocks TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -114,7 +114,10 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 	block.CreatedBy = Bc.CreatedBy
 	block.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	block.IsActive = Bc.IsActive
+	block.ChannelSlugname=chname
+	block.ChannelID=chid
 	createblock, err := Blockmodel.CreateBlocks(block, blocks.DB)
+
 
 	if err != nil {
 
@@ -331,75 +334,85 @@ func (blocks *Block) Addblocktomycollecton(id int, tenantid int, userid int) (bo
 
 	var Block TblBlock
 
-	err := Blockmodel.GetBlocks(id, blocks.DB, &Block)
+	err := Blockmodel.GetBlocks(id, blocks.DB, &Block, tenantid)
 
-	if err != nil {
-		fmt.Println("Add to mycollection contain error,line 338", err)
+
+	if Block.Id != 0 {
+
+		if err != nil {
+			fmt.Println("Add to mycollection contain error,line 338", err)
+		}
+		currenttime, _ := time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+
+		myblock := TblBlock{
+			Title:            Block.Title,
+			BlockDescription: Block.BlockDescription,
+			BlockContent:     Block.BlockContent,
+			ChannelSlugname: Block.ChannelSlugname,
+			BlockCss:         Block.BlockCss,
+			IconImage:        Block.IconImage,
+			CoverImage:       Block.CoverImage,
+			Prime:            Block.Prime,
+			IsActive:         Block.IsActive,
+			CreatedOn:        currenttime,
+			CreatedBy:        userid,
+			ModifiedBy:       Block.ModifiedBy,
+			DeletedOn:        Block.DeletedOn,
+			DeletedBy:        Block.DeletedBy,
+			IsDeleted:        Block.IsDeleted,
+			TenantId:         tenantid,
+			ChannelID:        Block.ChannelID,
+		}
+
+		// Blockmodel.AddToMycollection(myblock, blocks.DB)
+
+		blockdata, err2 := Blockmodel.CreateBlocks(myblock, blocks.DB)
+
+		if err2 != nil {
+			fmt.Println("block err", err)
+		}
+
+		var block TblBlockMstrTag
+
+		tag, err1 := Blockmodel.TagNameCheck("default", blocks.DB, block, tenantid)
+
+		if err1 != nil {
+			return false, err
+		}
+
+		TagCreate := CreateTag{
+			BlockId:   blockdata.Id,
+			TagId:     tag.Id,
+			TagName:   tag.TagTitle,
+			CreatedBy: userid,
+		}
+
+		var tags TblBlockTags
+		tags.BlockId = TagCreate.BlockId
+		tags.TagId = TagCreate.TagId
+		tags.TagName = TagCreate.TagName
+		tags.TenantId = tenantid
+		tags.CreatedBy = TagCreate.CreatedBy
+		tags.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+
+		Blockmodel.CreateBlockTag(tags, blocks.DB)
+
+		var collection TblBlockCollection
+
+		collection.BlockId = blockdata.Id
+		collection.UserId = userid
+		collection.TenantId = tenantid
+		collection.DeletedBy = userid
+		collection.IsDeleted = blockdata.IsDeleted
+
+		Blockmodel.CreateBlockCollection(collection, blocks.DB)
+
+		return true, nil
+
+	} else {
+		return false, nil
 	}
-	currenttime,_:=time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
-	
-	myblock := TblBlock{
-		Title:            Block.Title,
-		BlockDescription: Block.BlockDescription,
-		BlockContent:     Block.BlockContent,
-		BlockCss:         Block.BlockCss,
-		IconImage:        Block.IconImage,
-		CoverImage:       Block.CoverImage,
-		Prime:            Block.Prime,
-		IsActive:         Block.IsActive,
-		CreatedOn:        currenttime,
-		CreatedBy:        userid,
-		ModifiedBy:       Block.ModifiedBy,
-		DeletedOn:        Block.DeletedOn,
-		DeletedBy:        Block.DeletedBy,
-		IsDeleted:        Block.IsDeleted,
-		TenantId:         tenantid,
-	}
 
-	// Blockmodel.AddToMycollection(myblock, blocks.DB)
-
-	blockdata, err2 := Blockmodel.CreateBlocks(myblock, blocks.DB)
-
-	if err2 != nil {
-		fmt.Println("block err", err)
-	}
-
-	var block TblBlockMstrTag
-
-	tag, err1 := Blockmodel.TagNameCheck("default", blocks.DB, block, tenantid)
-
-	if err1 != nil {
-		return false, err
-	}
-
-	TagCreate := CreateTag{
-		BlockId:   blockdata.Id,
-		TagId:     tag.Id,
-		TagName:   tag.TagTitle,
-		CreatedBy: userid,
-	}
-
-	var tags TblBlockTags
-	tags.BlockId = TagCreate.BlockId
-	tags.TagId = TagCreate.TagId
-	tags.TagName = TagCreate.TagName
-	tags.TenantId = tenantid
-	tags.CreatedBy = TagCreate.CreatedBy
-	tags.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
-
-	Blockmodel.CreateBlockTag(tags, blocks.DB)
-
-	var collection TblBlockCollection
-
-	collection.BlockId = blockdata.Id
-	collection.UserId = userid
-	collection.TenantId = tenantid
-	collection.DeletedBy = userid
-	collection.IsDeleted = blockdata.IsDeleted
-
-	Blockmodel.CreateBlockCollection(collection, blocks.DB)
-
-	return true, nil
 }
 
 // check block title is alreay exists
@@ -578,3 +591,4 @@ func (blocks *Block) DeleteTags(id int, name string, tenantid int) error {
 	return nil
 
 }
+

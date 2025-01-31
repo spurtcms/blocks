@@ -124,7 +124,7 @@ func TestCreate(t *testing.T) {
 			IsActive:     1,
 		}
 
-		createblock, err := Blocks.CreateBlock(BlockCreate)
+		createblock, err := Blocks.CreateBlock(BlockCreate,"",0)
 
 		if err != nil {
 			log.Println("collection list", err)

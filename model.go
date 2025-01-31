@@ -48,6 +48,7 @@ type TblBlock struct {
 	Id               int       `gorm:"primaryKey;auto_increment;type:serial"`
 	Title            string    `gorm:"type:character varying"`
 	SlugName         string    `gorm:"type:character varying"`
+	ChannelSlugname  string    `gorm:"type:character varying"`
 	BlockDescription string    `gorm:"type:text"`
 	BlockContent     string    `gorm:"type:text"`
 	BlockCss         string    `gorm:"type:text"`
@@ -73,6 +74,7 @@ type TblBlock struct {
 	Actions          string    `gorm:"<-:false"`
 	CreatedDate      string    `gorm:"-:migration;<-:false"`
 	ModifiedDate     string    `gorm:"-:migration;<-:false"`
+	ChannelID        int       `gorm:"column:channel_id"`
 }
 
 type TblBlockTags struct {
@@ -107,7 +109,7 @@ type TblBlockCollection struct {
 }
 
 // get collectionlist
-func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int) (collection []TblBlock, err error) {
+func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int, chid int) (collection []TblBlock, err error) {
 
 	query := DB.Table("tbl_blocks").Select("tbl_blocks.id,tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_block_collections.is_deleted = ? and tbl_block_collections.user_id = ?  and tbl_block_collections.tenant_id = ?  and tbl_blocks.is_active = ?", 0, Blockmodel.UserId, tenantid, 1).Group("tbl_blocks.id").Group("tbl_users.profile_image_path").Order("tbl_blocks.id desc")
 
@@ -115,6 +117,10 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 
 		query = query.Where("LOWER(TRIM(tbl_blocks.title)) LIKE LOWER(TRIM(?))", "%"+filter.Keyword+"%")
 
+	}
+
+	if chid != 0 {
+		query = query.Where("tbl_blocks.channel_id=?", chid)
 	}
 
 	if Blockmodel.DataAccess == 1 {
@@ -329,12 +335,25 @@ func (Blockmodel BlockModel) CheckCollectionById(collections TblBlockCollection,
 
 }
 
-func (Blockmodel BlockModel) GetBlocks(id int, DB *gorm.DB, Blocks *TblBlock) error {
+// func (Blockmodel BlockModel) GetBlocks(id int, DB *gorm.DB, Blocks *TblBlock) error {
 
-	if err := DB.Table("tbl_blocks").Where("id=? and tenant_id is NULL", id).Debug().First(&Blocks).Error; err != nil {
+// 	if err := DB.Table("tbl_blocks").Where("id=? and tenant_id is NULL", id).Debug().First(&Blocks).Error; err != nil {
 
+// 		return err
+// 	}
+// 	return nil
+// }
+
+func (Blockmodel BlockModel) GetBlocks(id int, DB *gorm.DB, Blocks *TblBlock, tenantid int) error {
+
+	if err := DB.Table("tbl_blocks").
+		Select("tbl_blocks.*, tbl_channels.id as channel_id").
+		Joins("INNER JOIN tbl_channels ON tbl_blocks.channel_Slugname = tbl_channels.channel_name").
+		Where("tbl_blocks.id = ? and tbl_blocks.tenant_id IS NULL and tbl_channels.tenant_id=?", id, tenantid).
+		Debug().Find(&Blocks).Error; err != nil {
 		return err
 	}
+
 	return nil
 }
 
