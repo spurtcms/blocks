@@ -461,18 +461,19 @@ func (Blockmodel BlockModel) BlockEdit(block TblBlock, id int, DB *gorm.DB, tena
 	return block, nil
 }
 
+
 // Update Functionality
 
 func (Blockmodel BlockModel) UpdateBlock(block TblBlock, id int, DB *gorm.DB) error {
 
 	if block.CoverImage != "" {
-		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and  tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime, "cover_image": block.CoverImage}).Error; err != nil {
+		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and  tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "channel_slugname": block.ChannelSlugname, "channel_id":block.ChannelID, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime, "cover_image": block.CoverImage}).Error; err != nil {
 
 			return err
 		}
 
 	} else {
-		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime}).Error; err != nil {
+		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "channel_slugname": block.ChannelSlugname,"channel_id":block.ChannelID, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime}).Error; err != nil {
 
 			return err
 		}

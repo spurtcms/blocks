@@ -510,8 +510,9 @@ func (blocks *Block) BlockEdit(id int, tenantid int) (blockdata TblBlock, err er
 
 }
 
+
 // Update Functionality
-func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation) error {
+func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation, channelname string,channelid int) error {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -528,6 +529,8 @@ func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation) error {
 	block.IsActive = updateblock.IsActive
 	block.Prime = updateblock.Prime
 	block.TenantId = updateblock.TenantId
+	block.ChannelSlugname = channelname
+	block.ChannelID=channelid
 	block.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	err := Blockmodel.UpdateBlock(block, id, blocks.DB)
 

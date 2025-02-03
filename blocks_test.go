@@ -199,7 +199,7 @@ func TestBlockUpdate(t *testing.T) {
 			TenantId:   1,
 		}
 
-		err := Blocks.UpdateBlock(23, BlockCreate)
+		err := Blocks.UpdateBlock(23, BlockCreate,"",0)
 
 		if err != nil {
 			log.Println("collection list", err)
