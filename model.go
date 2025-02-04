@@ -349,7 +349,7 @@ func (Blockmodel BlockModel) GetBlocks(id int, DB *gorm.DB, Blocks *TblBlock, te
 	if err := DB.Table("tbl_blocks").
 		Select("tbl_blocks.*, tbl_channels.id as channel_id").
 		Joins("INNER JOIN tbl_channels ON tbl_blocks.channel_Slugname = tbl_channels.channel_name").
-		Where("tbl_blocks.id = ? and tbl_blocks.tenant_id IS NULL and tbl_channels.tenant_id=?", id, tenantid).
+		Where("tbl_blocks.id = ? and tbl_blocks.tenant_id IS NULL and tbl_channels.tenant_id=? and tbl_channels.is_deleted = 0", id, tenantid).
 		Debug().Find(&Blocks).Error; err != nil {
 		return err
 	}
