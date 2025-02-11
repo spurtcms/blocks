@@ -1,4 +1,5 @@
-# Blocks
+
+# Blocks [![GoDoc](https://godoc.org/github.com/spurtcms/blocks?status.svg)](https://pkg.go.dev/github.com/spurtcms/blocks)
 spurtCMS includes a flexible and modular blocks system to allow users to build dynamic, reusable sections for their websites. Blocks can be customized, reused, and combined to create powerful page layouts.
 
 
