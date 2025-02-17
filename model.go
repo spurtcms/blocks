@@ -7,7 +7,8 @@ import (
 )
 
 type Filter struct {
-	Keyword string
+	Keyword   string
+	Channelid string
 }
 
 type BlockCreation struct {
@@ -109,9 +110,9 @@ type TblBlockCollection struct {
 }
 
 // get collectionlist
-func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int, chid int) (collection []TblBlock, err error) {
+func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int, chid int) (collection []TblBlock, count int64, err error) {
 
-	query := DB.Table("tbl_blocks").Select("tbl_blocks.id,tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_block_collections.is_deleted = ? and tbl_block_collections.user_id = ?  and tbl_block_collections.tenant_id = ?  and tbl_blocks.is_active = ?", 0, Blockmodel.UserId, tenantid, 1).Group("tbl_blocks.id").Group("tbl_users.profile_image_path").Order("tbl_blocks.id desc")
+	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.id,tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_block_collections.is_deleted = ? and tbl_block_collections.user_id = ?  and tbl_block_collections.tenant_id = ?  and tbl_blocks.is_active = ?", 0, Blockmodel.UserId, tenantid, 1).Group("tbl_blocks.id").Group("tbl_users.profile_image_path").Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -128,9 +129,9 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 		query = query.Where("tbl_block_collections.user_id=?", Blockmodel.UserId)
 	}
 
-	query.Find(&collection)
+	query.Find(&collection).Count(&count)
 
-	return collection, err
+	return collection, count, err
 
 }
 
@@ -167,6 +168,10 @@ func (Blockmodel BlockModel) BlockLists(limit, offset int, filter Filter, DB *go
 
 		query = query.Where("LOWER(TRIM(tbl_blocks.title)) LIKE LOWER(TRIM(?))  ", "%"+filter.Keyword+"%")
 
+	}
+
+	if filter.Channelid != "" {
+		query = query.Where("string_to_array(tbl_blocks.channel_id::TEXT, ',', '') @> ARRAY[?]::TEXT[]", filter.Channelid)
 	}
 
 	if Blockmodel.DataAccess == 1 {
@@ -349,7 +354,7 @@ func (Blockmodel BlockModel) GetBlocks(id int, DB *gorm.DB, Blocks *TblBlock, te
 	if err := DB.Table("tbl_blocks").
 		Select("tbl_blocks.*, tbl_channels.id as channel_id").
 		Joins("INNER JOIN tbl_channels ON tbl_blocks.channel_Slugname = tbl_channels.channel_name").
-		Where("tbl_blocks.id = ? and tbl_blocks.tenant_id IS NULL and tbl_channels.tenant_id=? and tbl_channels.is_deleted = 0", id, tenantid).
+		Where("tbl_blocks.id = ? and tbl_blocks.tenant_id IS NULL and tbl_channels.tenant_id=?", id, tenantid).
 		Debug().Find(&Blocks).Error; err != nil {
 		return err
 	}
@@ -461,19 +466,18 @@ func (Blockmodel BlockModel) BlockEdit(block TblBlock, id int, DB *gorm.DB, tena
 	return block, nil
 }
 
-
 // Update Functionality
 
 func (Blockmodel BlockModel) UpdateBlock(block TblBlock, id int, DB *gorm.DB) error {
 
 	if block.CoverImage != "" {
-		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and  tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "channel_slugname": block.ChannelSlugname, "channel_id":block.ChannelID, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime, "cover_image": block.CoverImage}).Error; err != nil {
+		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and  tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "channel_slugname": block.ChannelSlugname, "channel_id": block.ChannelID, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime, "cover_image": block.CoverImage}).Error; err != nil {
 
 			return err
 		}
 
 	} else {
-		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "channel_slugname": block.ChannelSlugname,"channel_id":block.ChannelID, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime}).Error; err != nil {
+		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "channel_slugname": block.ChannelSlugname, "channel_id": block.ChannelID, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime}).Error; err != nil {
 
 			return err
 		}

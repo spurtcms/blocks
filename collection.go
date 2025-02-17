@@ -24,24 +24,24 @@ func BlockSetup(config Config) *Block {
 
 /* Collection List*/
 // pass limit, offset get collectionlist
-func (blocks *Block) CollectionList(filter Filter, tenantid int,channelid int) (collectionlists []TblBlock, err error) {
+func (blocks *Block) CollectionList(filter Filter, tenantid int, channelid int) (collectionlists []TblBlock, count int64, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return []TblBlock{}, AuthErr
+		return []TblBlock{},0, AuthErr
 	}
 
 	Blockmodel.DataAccess = blocks.DataAccess
 
 	Blockmodel.UserId = blocks.UserId
 
-	collectionlist, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid,channelid)
+	collectionlist,blockcount, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid, channelid)
 
 	if err != nil {
 
 		fmt.Println(err)
 	}
-	return collectionlist, nil
+	return collectionlist,blockcount, nil
 }
 
 // Block list
@@ -95,7 +95,7 @@ func (blocks *Block) DefaultBlockList(limit, offset int, filter Filter, tenantid
 }
 
 // Create Blog
-func (blocks *Block) CreateBlock(Bc BlockCreation,chname string,chid int) (createblocks TblBlock, err error) {
+func (blocks *Block) CreateBlock(Bc BlockCreation, chname string, chid int) (createblocks TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -114,10 +114,9 @@ func (blocks *Block) CreateBlock(Bc BlockCreation,chname string,chid int) (creat
 	block.CreatedBy = Bc.CreatedBy
 	block.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	block.IsActive = Bc.IsActive
-	block.ChannelSlugname=chname
-	block.ChannelID=chid
+	block.ChannelSlugname = chname
+	block.ChannelID = chid
 	createblock, err := Blockmodel.CreateBlocks(block, blocks.DB)
-
 
 	if err != nil {
 
@@ -336,7 +335,6 @@ func (blocks *Block) Addblocktomycollecton(id int, tenantid int, userid int) (bo
 
 	err := Blockmodel.GetBlocks(id, blocks.DB, &Block, tenantid)
 
-
 	if Block.Id != 0 {
 
 		if err != nil {
@@ -348,7 +346,7 @@ func (blocks *Block) Addblocktomycollecton(id int, tenantid int, userid int) (bo
 			Title:            Block.Title,
 			BlockDescription: Block.BlockDescription,
 			BlockContent:     Block.BlockContent,
-			ChannelSlugname: Block.ChannelSlugname,
+			ChannelSlugname:  Block.ChannelSlugname,
 			BlockCss:         Block.BlockCss,
 			IconImage:        Block.IconImage,
 			CoverImage:       Block.CoverImage,
@@ -510,9 +508,8 @@ func (blocks *Block) BlockEdit(id int, tenantid int) (blockdata TblBlock, err er
 
 }
 
-
 // Update Functionality
-func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation, channelname string,channelid int) error {
+func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation, channelname string, channelid int) error {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -530,7 +527,7 @@ func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation, channelname 
 	block.Prime = updateblock.Prime
 	block.TenantId = updateblock.TenantId
 	block.ChannelSlugname = channelname
-	block.ChannelID=channelid
+	block.ChannelID = channelid
 	block.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	err := Blockmodel.UpdateBlock(block, id, blocks.DB)
 
@@ -594,4 +591,3 @@ func (blocks *Block) DeleteTags(id int, name string, tenantid int) error {
 	return nil
 
 }
-
