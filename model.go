@@ -23,6 +23,8 @@ type BlockCreation struct {
 	CreatedBy        int
 	ModifiedBy       int
 	IsActive         int
+	ChannelName      string
+	ChannelId        string
 }
 
 type MasterTagCreate struct {
@@ -75,7 +77,8 @@ type TblBlock struct {
 	Actions          string    `gorm:"<-:false"`
 	CreatedDate      string    `gorm:"-:migration;<-:false"`
 	ModifiedDate     string    `gorm:"-:migration;<-:false"`
-	ChannelID        int       `gorm:"column:channel_id"`
+	ChannelID        string    `gorm:"type:character varying"`
+	ChannelNames     []string  `gorm:"-"`
 }
 
 type TblBlockTags struct {

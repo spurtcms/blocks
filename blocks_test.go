@@ -124,7 +124,7 @@ func TestCreate(t *testing.T) {
 			IsActive:     1,
 		}
 
-		createblock, err := Blocks.CreateBlock(BlockCreate,"",0)
+		createblock, err := Blocks.CreateBlock(BlockCreate)
 
 		if err != nil {
 			log.Println("collection list", err)
@@ -199,7 +199,7 @@ func TestBlockUpdate(t *testing.T) {
 			TenantId:   1,
 		}
 
-		err := Blocks.UpdateBlock(23, BlockCreate,"",0)
+		err := Blocks.UpdateBlock(23, BlockCreate)
 
 		if err != nil {
 			log.Println("collection list", err)

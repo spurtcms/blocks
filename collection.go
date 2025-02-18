@@ -28,20 +28,20 @@ func (blocks *Block) CollectionList(filter Filter, tenantid int, channelid int) 
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
-		return []TblBlock{},0, AuthErr
+		return []TblBlock{}, 0, AuthErr
 	}
 
 	Blockmodel.DataAccess = blocks.DataAccess
 
 	Blockmodel.UserId = blocks.UserId
 
-	collectionlist,blockcount, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid, channelid)
+	collectionlist, blockcount, err := Blockmodel.CollectionLists(filter, blocks.DB, tenantid, channelid)
 
 	if err != nil {
 
 		fmt.Println(err)
 	}
-	return collectionlist,blockcount, nil
+	return collectionlist, blockcount, nil
 }
 
 // Block list
@@ -95,7 +95,7 @@ func (blocks *Block) DefaultBlockList(limit, offset int, filter Filter, tenantid
 }
 
 // Create Blog
-func (blocks *Block) CreateBlock(Bc BlockCreation, chname string, chid int) (createblocks TblBlock, err error) {
+func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -114,8 +114,10 @@ func (blocks *Block) CreateBlock(Bc BlockCreation, chname string, chid int) (cre
 	block.CreatedBy = Bc.CreatedBy
 	block.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	block.IsActive = Bc.IsActive
-	block.ChannelSlugname = chname
-	block.ChannelID = chid
+	block.ChannelSlugname = Bc.ChannelName
+	block.ChannelID = Bc.ChannelId
+
+	fmt.Println(Bc.ChannelId, "channeliduuuu")
 	createblock, err := Blockmodel.CreateBlocks(block, blocks.DB)
 
 	if err != nil {
@@ -509,7 +511,7 @@ func (blocks *Block) BlockEdit(id int, tenantid int) (blockdata TblBlock, err er
 }
 
 // Update Functionality
-func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation, channelname string, channelid int) error {
+func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation) error {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -526,9 +528,10 @@ func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation, channelname 
 	block.IsActive = updateblock.IsActive
 	block.Prime = updateblock.Prime
 	block.TenantId = updateblock.TenantId
-	block.ChannelSlugname = channelname
-	block.ChannelID = channelid
+	block.ChannelSlugname = updateblock.ChannelName
+	block.ChannelID = updateblock.ChannelId
 	block.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+	
 	err := Blockmodel.UpdateBlock(block, id, blocks.DB)
 
 	if err != nil {
