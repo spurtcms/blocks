@@ -2,6 +2,7 @@ package blocks
 
 import (
 	"fmt"
+	"strings"
 
 	"time"
 
@@ -24,7 +25,7 @@ func BlockSetup(config Config) *Block {
 
 /* Collection List*/
 // pass limit, offset get collectionlist
-func (blocks *Block) CollectionList(filter Filter, tenantid int, channelid int) (collectionlists []TblBlock, count int64, err error) {
+func (blocks *Block) CollectionList(filter Filter, tenantid int, channelid string) (collectionlists []TblBlock, count int64, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -116,8 +117,8 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 	block.IsActive = Bc.IsActive
 	block.ChannelSlugname = Bc.ChannelName
 	block.ChannelID = Bc.ChannelId
+	block.SlugName = strings.ToLower(strings.ReplaceAll(Bc.Title, " ", "-"))
 
-	fmt.Println(Bc.ChannelId, "channeliduuuu")
 	createblock, err := Blockmodel.CreateBlocks(block, blocks.DB)
 
 	if err != nil {
@@ -366,46 +367,46 @@ func (blocks *Block) Addblocktomycollecton(id int, tenantid int, userid int) (bo
 
 		// Blockmodel.AddToMycollection(myblock, blocks.DB)
 
-		blockdata, err2 := Blockmodel.CreateBlocks(myblock, blocks.DB)
+		_, err2 := Blockmodel.CreateBlocks(myblock, blocks.DB)
 
 		if err2 != nil {
 			fmt.Println("block err", err)
 		}
 
-		var block TblBlockMstrTag
+		// var block TblBlockMstrTag
 
-		tag, err1 := Blockmodel.TagNameCheck("default", blocks.DB, block, tenantid)
+		// tag, err1 := Blockmodel.TagNameCheck("default", blocks.DB, block, tenantid)
 
-		if err1 != nil {
-			return false, err
-		}
+		// if err1 != nil {
+		// 	return false, err
+		// }
 
-		TagCreate := CreateTag{
-			BlockId:   blockdata.Id,
-			TagId:     tag.Id,
-			TagName:   tag.TagTitle,
-			CreatedBy: userid,
-		}
+		// TagCreate := CreateTag{
+		// 	BlockId:   blockdata.Id,
+		// 	TagId:     tag.Id,
+		// 	TagName:   tag.TagTitle,
+		// 	CreatedBy: userid,
+		// }
 
-		var tags TblBlockTags
-		tags.BlockId = TagCreate.BlockId
-		tags.TagId = TagCreate.TagId
-		tags.TagName = TagCreate.TagName
-		tags.TenantId = tenantid
-		tags.CreatedBy = TagCreate.CreatedBy
-		tags.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+		// var tags TblBlockTags
+		// tags.BlockId = TagCreate.BlockId
+		// tags.TagId = TagCreate.TagId
+		// tags.TagName = TagCreate.TagName
+		// tags.TenantId = tenantid
+		// tags.CreatedBy = TagCreate.CreatedBy
+		// tags.CreatedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 
-		Blockmodel.CreateBlockTag(tags, blocks.DB)
+		// Blockmodel.CreateBlockTag(tags, blocks.DB)
 
-		var collection TblBlockCollection
+		// var collection TblBlockCollection
 
-		collection.BlockId = blockdata.Id
-		collection.UserId = userid
-		collection.TenantId = tenantid
-		collection.DeletedBy = userid
-		collection.IsDeleted = blockdata.IsDeleted
+		// collection.BlockId = blockdata.Id
+		// collection.UserId = userid
+		// collection.TenantId = tenantid
+		// collection.DeletedBy = userid
+		// collection.IsDeleted = blockdata.IsDeleted
 
-		Blockmodel.CreateBlockCollection(collection, blocks.DB)
+		// Blockmodel.CreateBlockCollection(collection, blocks.DB)
 
 		return true, nil
 
@@ -498,8 +499,7 @@ func (blocks *Block) BlockEdit(id int, tenantid int) (blockdata TblBlock, err er
 		return TblBlock{}, AuthErr
 	}
 
-	var block TblBlock
-	blockdetails, err := Blockmodel.BlockEdit(block, id, blocks.DB, tenantid)
+	blockdetails, err := Blockmodel.BlockEdit(id, blocks.DB, tenantid)
 
 	if err != nil {
 
@@ -531,7 +531,7 @@ func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation) error {
 	block.ChannelSlugname = updateblock.ChannelName
 	block.ChannelID = updateblock.ChannelId
 	block.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
-	
+
 	err := Blockmodel.UpdateBlock(block, id, blocks.DB)
 
 	if err != nil {

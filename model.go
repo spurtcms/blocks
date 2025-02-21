@@ -113,9 +113,9 @@ type TblBlockCollection struct {
 }
 
 // get collectionlist
-func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int, chid int) (collection []TblBlock, count int64, err error) {
+func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid int, chid string) (collection []TblBlock, count int64, err error) {
 
-	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.id,tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_block_collections.is_deleted = ? and tbl_block_collections.user_id = ?  and tbl_block_collections.tenant_id = ?  and tbl_blocks.is_active = ?", 0, Blockmodel.UserId, tenantid, 1).Group("tbl_blocks.id").Group("tbl_users.profile_image_path").Order("tbl_blocks.id desc")
+	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.id,tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where(" tbl_blocks.is_active = ? and tbl_blocks.tenant_id=?", 1, tenantid).Group("tbl_blocks.id").Group("tbl_users.profile_image_path").Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
@@ -123,13 +123,9 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 
 	}
 
-	if chid != 0 {
-		query = query.Where("tbl_blocks.channel_id=?", chid)
-	}
+	if chid != "" {
 
-	if Blockmodel.DataAccess == 1 {
-
-		query = query.Where("tbl_block_collections.user_id=?", Blockmodel.UserId)
+		query = query.Where("string_to_array((tbl_blocks.channel_id), ',') && string_to_array(?, ',')", (chid))
 	}
 
 	query.Find(&collection).Count(&count)
@@ -138,62 +134,95 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 
 }
 
+// // get blocklist
+// func (Blockmodel BlockModel) BlockLists(limit, offset int, filter Filter, DB *gorm.DB, tenantid int) (block []TblBlock, Totalblock int64, err error) {
+
+// 	dbName := DB.Dialector.Name()
+
+// 	var query *gorm.DB
+
+// 	if dbName == "postgres" {
+
+// 		query = DB.Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username, STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value ,(case when (select id from tbl_block_collections where tbl_block_collections.block_id = tbl_blocks.id and is_deleted = 0 limit 1) is not null then 'true' else 'false' end ) as actions ").Table("tbl_blocks")
+
+// 	} else if dbName == "mysql" {
+
+// 		query = DB.Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username, GROUP_CONCAT(tbl_block_tags.tag_name ORDER BY tbl_block_tags.tag_name SEPARATOR ', ') AS tag_value ,(case when (select id from tbl_block_collections where tbl_block_collections.block_id = tbl_blocks.id and is_deleted = 0 limit 1) is not null then 'true' else 'false' end ) as actions ").Table("tbl_blocks")
+// 	}
+
+// 	query = query.Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("left join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_users on case when tbl_block_collections.id is not null then tbl_users.id = tbl_block_collections.user_id else tbl_users.id = tbl_blocks.created_by end")
+
+// 	if dbName == "postgres" {
+
+// 		query = query.Where("tbl_blocks.is_deleted = ? and (tbl_block_collections.is_deleted = ? or tbl_block_collections is NULL ) and tbl_blocks.tenant_id = ?  and (tbl_blocks.created_by = ? or tbl_block_collections.user_id = ?)and tbl_block_tags.is_deleted = ?  ", 0, 0, tenantid, Blockmodel.UserId, Blockmodel.UserId, 0)
+
+// 	} else if dbName == "mysql" {
+
+// 		query = query.Where("tbl_blocks.is_deleted = ? and (tbl_block_collections.is_deleted = ? or tbl_block_collections.id is NULL ) and tbl_blocks.tenant_id = ?  and (tbl_blocks.created_by = ? or tbl_block_collections.user_id = ?)and tbl_block_tags.is_deleted = ?  ", 0, 0, tenantid, Blockmodel.UserId, Blockmodel.UserId, 0)
+// 	}
+
+// 	query = query.Group("tbl_blocks.id").Order("tbl_blocks.id desc")
+
+// 	if filter.Keyword != "" {
+
+// 		query = query.Where("LOWER(TRIM(tbl_blocks.title)) LIKE LOWER(TRIM(?))  ", "%"+filter.Keyword+"%")
+
+// 	}
+
+// 	if filter.Channelid != "" {
+// 		query = query.Where("string_to_array(tbl_blocks.channel_id::TEXT, ',', '') @> ARRAY[?]::TEXT[]", filter.Channelid)
+// 	}
+
+// 	if Blockmodel.DataAccess == 1 {
+
+// 		query = query.Where("tbl_blocks.created_by=?", Blockmodel.UserId)
+// 	}
+
+// 	if limit != 0 {
+
+// 		query.Limit(limit).Offset(offset).Debug().Find(&block)
+
+// 		return block, 0, err
+
+// 	}
+
+// 	query.Find(&block).Count(&Totalblock)
+
+// 	return block, Totalblock, err
+
+// }
 // get blocklist
 func (Blockmodel BlockModel) BlockLists(limit, offset int, filter Filter, DB *gorm.DB, tenantid int) (block []TblBlock, Totalblock int64, err error) {
 
-	dbName := DB.Dialector.Name()
-
 	var query *gorm.DB
 
-	if dbName == "postgres" {
+	query = DB.Select("tbl_blocks.*, max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username").
+		Table("tbl_blocks").
+		Joins("INNER JOIN tbl_users ON tbl_users.id = tbl_blocks.created_by")
 
-		query = DB.Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username, STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value ,(case when (select id from tbl_block_collections where tbl_block_collections.block_id = tbl_blocks.id and is_deleted = 0 limit 1) is not null then 'true' else 'false' end ) as actions ").Table("tbl_blocks")
+	query = query.Where("tbl_blocks.is_deleted = ? AND tbl_blocks.tenant_id = ?", 0, tenantid)
 
-	} else if dbName == "mysql" {
-
-		query = DB.Select("tbl_blocks.*,max(tbl_users.first_name) as first_name,max(tbl_users.last_name)  as last_name, max(tbl_users.profile_image_path) as profile_image_path, max(tbl_users.username)  as username, GROUP_CONCAT(tbl_block_tags.tag_name ORDER BY tbl_block_tags.tag_name SEPARATOR ', ') AS tag_value ,(case when (select id from tbl_block_collections where tbl_block_collections.block_id = tbl_blocks.id and is_deleted = 0 limit 1) is not null then 'true' else 'false' end ) as actions ").Table("tbl_blocks")
+	if Blockmodel.DataAccess == 1 {
+		query = query.Where("tbl_blocks.created_by = ?", Blockmodel.UserId)
 	}
-
-	query = query.Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Joins("left join tbl_block_collections on tbl_block_collections.block_id = tbl_blocks.id").Joins("inner join tbl_users on case when tbl_block_collections.id is not null then tbl_users.id = tbl_block_collections.user_id else tbl_users.id = tbl_blocks.created_by end")
-
-	if dbName == "postgres" {
-
-		query = query.Where("tbl_blocks.is_deleted = ? and (tbl_block_collections.is_deleted = ? or tbl_block_collections is NULL ) and tbl_blocks.tenant_id = ?  and (tbl_blocks.created_by = ? or tbl_block_collections.user_id = ?)and tbl_block_tags.is_deleted = ?  ", 0, 0, tenantid, Blockmodel.UserId, Blockmodel.UserId, 0)
-
-	} else if dbName == "mysql" {
-
-		query = query.Where("tbl_blocks.is_deleted = ? and (tbl_block_collections.is_deleted = ? or tbl_block_collections.id is NULL ) and tbl_blocks.tenant_id = ?  and (tbl_blocks.created_by = ? or tbl_block_collections.user_id = ?)and tbl_block_tags.is_deleted = ?  ", 0, 0, tenantid, Blockmodel.UserId, Blockmodel.UserId, 0)
-	}
-
-	query = query.Group("tbl_blocks.id").Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
-
-		query = query.Where("LOWER(TRIM(tbl_blocks.title)) LIKE LOWER(TRIM(?))  ", "%"+filter.Keyword+"%")
-
+		query = query.Where("LOWER(TRIM(tbl_blocks.title)) LIKE LOWER(TRIM(?))", "%"+filter.Keyword+"%")
 	}
 
 	if filter.Channelid != "" {
-		query = query.Where("string_to_array(tbl_blocks.channel_id::TEXT, ',', '') @> ARRAY[?]::TEXT[]", filter.Channelid)
+		query = query.Where("tbl_blocks.channel_id = ?", filter.Channelid)
 	}
 
-	if Blockmodel.DataAccess == 1 {
-
-		query = query.Where("tbl_blocks.created_by=?", Blockmodel.UserId)
-	}
+	query = query.Group("tbl_blocks.id").Order("tbl_blocks.id DESC")
 
 	if limit != 0 {
-
-		query.Limit(limit).Offset(offset).Debug().Find(&block)
-
+		err = query.Limit(limit).Offset(offset).Find(&block).Error
 		return block, 0, err
-
 	}
 
-	query.Find(&block).Count(&Totalblock)
-
+	err = query.Find(&block).Count(&Totalblock).Error
 	return block, Totalblock, err
-
 }
 
 // get dafault blocklist
@@ -446,27 +475,15 @@ func (Blockmodel BlockModel) BlcokIsActive(blockstatus TblBlock, id int, status 
 }
 
 // Edit functionality
+func (Blockmodel BlockModel) BlockEdit(id int, DB *gorm.DB, tenantid int) (blockdata TblBlock, err error) {
 
-func (Blockmodel BlockModel) BlockEdit(block TblBlock, id int, DB *gorm.DB, tenantid int) (blockdata TblBlock, err error) {
+	query := DB.Select("tbl_blocks.*").Table("tbl_blocks")
 
-	dbName := DB.Dialector.Name()
-	var query *gorm.DB
-
-	if dbName == "postgres" {
-
-		query = DB.Select("tbl_blocks.*,STRING_AGG(tbl_block_tags.tag_name, ', ') as tag_value")
-
-	} else if dbName == "mysql" {
-
-		query = DB.Select("tbl_blocks.*,GROUP_CONCAT(tbl_block_tags.tag_name ORDER BY tbl_block_tags.tag_name SEPARATOR ', ') AS tag_value")
-	}
-
-	if err := query.Table("tbl_blocks").Joins("inner join tbl_block_tags on tbl_block_tags.block_id = tbl_blocks.id").Where("tbl_blocks.id=? and tbl_blocks.tenant_id=? and tbl_block_tags.is_deleted  = ?", id, tenantid, 0).Group("tbl_blocks.id").First(&block).Error; err != nil {
-
+	if err := query.Where("tbl_blocks.id = ? AND tbl_blocks.tenant_id = ?", id, tenantid).First(&blockdata).Error; err != nil {
 		return TblBlock{}, err
 	}
 
-	return block, nil
+	return blockdata, nil
 }
 
 // Update Functionality
