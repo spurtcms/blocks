@@ -3,7 +3,6 @@ package blocks
 import (
 	"errors"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -12,9 +11,8 @@ var (
 	ErrorPermission = errors.New("permissions enabled not initialised")
 	ErrorEmpty      = errors.New("given some values is empty")
 	TZONE, _        = time.LoadLocation(os.Getenv("TIME_ZONE"))
-	TenantId, _     = strconv.Atoi(os.Getenv("Tenant_ID"))
+	TenantId        = os.Getenv("Tenant_ID")
 )
-
 
 type BlockModel struct {
 	DataAccess int
@@ -22,7 +20,6 @@ type BlockModel struct {
 }
 
 var Blockmodel BlockModel
-
 
 func AuthandPermission(block *Block) error {
 

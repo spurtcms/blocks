@@ -25,7 +25,7 @@ func BlockSetup(config Config) *Block {
 
 /* Collection List*/
 // pass limit, offset get collectionlist
-func (blocks *Block) CollectionList(filter Filter, tenantid int, channelid string) (collectionlists []TblBlock, count int64, err error) {
+func (blocks *Block) CollectionList(filter Filter, tenantid string, channelid string) (collectionlists []TblBlock, count int64, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -46,7 +46,7 @@ func (blocks *Block) CollectionList(filter Filter, tenantid int, channelid strin
 }
 
 // Block list
-func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int) (blocklists []TblBlock, countblock int64, err error) {
+func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid string) (blocklists []TblBlock, countblock int64, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -71,7 +71,7 @@ func (blocks *Block) BlockList(limit, offset int, filter Filter, tenantid int) (
 }
 
 // Default Block list
-func (blocks *Block) DefaultBlockList(limit, offset int, filter Filter, tenantid int) (blocklists []TblBlock, countblock int64, err error) {
+func (blocks *Block) DefaultBlockList(limit, offset int, filter Filter, tenantid string) (blocklists []TblBlock, countblock int64, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -131,7 +131,7 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 }
 
 // Check tag name is already exists
-func (blocks *Block) CheckTagName(tagname string, tenantid int) (flg TblBlockMstrTag, err error) {
+func (blocks *Block) CheckTagName(tagname string, tenantid string) (flg TblBlockMstrTag, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -228,7 +228,7 @@ func (blocks *Block) BlockCollection(Collections CreateCollection) error {
 }
 
 // Get tag list
-func (blocks *Block) TagList(filter Filter, tenantid int) (taglists []TblBlockMstrTag, err error) {
+func (blocks *Block) TagList(filter Filter, tenantid string) (taglists []TblBlockMstrTag, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -251,7 +251,7 @@ func (blocks *Block) TagList(filter Filter, tenantid int) (taglists []TblBlockMs
 }
 
 // Remove Collection
-func (blocks *Block) RemoveBlock(id int, tenantid int) error {
+func (blocks *Block) RemoveBlock(id int, tenantid string) error {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -308,7 +308,7 @@ func (blocks *Block) RemoveBlock(id int, tenantid int) error {
 }
 
 // Check collection  already exists
-func (blocks *Block) CheckCollection(blockid, user_id, tenantid int) (flg bool, err error) {
+func (blocks *Block) CheckCollection(blockid, user_id int, tenantid string) (flg bool, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -327,7 +327,7 @@ func (blocks *Block) CheckCollection(blockid, user_id, tenantid int) (flg bool, 
 
 }
 
-func (blocks *Block) Addblocktomycollecton(id int, tenantid int, userid int) (bool, error) {
+func (blocks *Block) Addblocktomycollecton(id int, tenantid string, userid int) (bool, error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -418,7 +418,7 @@ func (blocks *Block) Addblocktomycollecton(id int, tenantid int, userid int) (bo
 
 // check block title is alreay exists
 
-func (blocks *Block) CheckTitleInBlock(title string, id, tenantid int) (bool, error) {
+func (blocks *Block) CheckTitleInBlock(title string, id int, tenantid string) (bool, error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -439,7 +439,7 @@ func (blocks *Block) CheckTitleInBlock(title string, id, tenantid int) (bool, er
 }
 
 // last 10 days la add pana block count
-func (blocks *Block) DashBoardBlockCount(tenantid int) (Totalcount int, lcount int, err error) {
+func (blocks *Block) DashBoardBlockCount(tenantid string) (Totalcount int, lcount int, err error) {
 
 	autherr := AuthandPermission(blocks)
 
@@ -467,7 +467,7 @@ func (blocks *Block) DashBoardBlockCount(tenantid int) (Totalcount int, lcount i
 
 // IsActive functionality in block
 
-func (blocks *Block) BlockIsActive(id int, status int, modifiedby int, tenantid int) (bool, error) {
+func (blocks *Block) BlockIsActive(id int, status int, modifiedby int, tenantid string) (bool, error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -492,7 +492,7 @@ func (blocks *Block) BlockIsActive(id int, status int, modifiedby int, tenantid 
 }
 
 // Edit Functionality
-func (blocks *Block) BlockEdit(id int, tenantid int) (blockdata TblBlock, err error) {
+func (blocks *Block) BlockEdit(id int, tenantid string) (blockdata TblBlock, err error) {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -545,7 +545,7 @@ func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation) error {
 
 // Delete Collection
 
-func (blocks *Block) DeleteCollection(id, tenantid int) error {
+func (blocks *Block) DeleteCollection(id int, tenantid string) error {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 
@@ -570,7 +570,7 @@ func (blocks *Block) DeleteCollection(id, tenantid int) error {
 
 // Delete tag in tbl_block_tags table
 
-func (blocks *Block) DeleteTags(id int, name string, tenantid int) error {
+func (blocks *Block) DeleteTags(id int, name string, tenantid string) error {
 
 	if AuthErr := AuthandPermission(blocks); AuthErr != nil {
 

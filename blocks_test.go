@@ -61,7 +61,7 @@ func TestBlockList(t *testing.T) {
 
 	Auth.VerifyToken(token, SecretKey)
 
-	permission, _ := Auth.IsGranted("Blocks", auth.CRUD, 1)
+	permission, _ := Auth.IsGranted("Blocks", auth.CRUD, "1")
 
 	Blocks := BlockSetup(Config{
 		DB:               db,
@@ -72,7 +72,7 @@ func TestBlockList(t *testing.T) {
 
 	if permission {
 		Blocks.UserId = 2
-		blocklist, blockcount, err := Blocks.BlockList(10, 0, Filter{}, 1)
+		blocklist, blockcount, err := Blocks.BlockList(10, 0, Filter{}, "1")
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -103,7 +103,7 @@ func TestCreate(t *testing.T) {
 
 	Auth.VerifyToken(token, SecretKey)
 
-	permission, _ := Auth.IsGranted("Blocks", auth.CRUD, 1)
+	permission, _ := Auth.IsGranted("Blocks", auth.CRUD, "1")
 
 	Blocks := BlockSetup(Config{
 		DB:               db,
@@ -118,7 +118,7 @@ func TestCreate(t *testing.T) {
 			Title:        "Block",
 			BlockContent: `<div class="card-6 p-[12px] bg-white rounded flex gap-[8px]"><div class="flex items-start gap-[6px]"><div class="flex flex-col gap-[4px]"><div class="w-[24px] h-[24px]"><img src="https://dev.spurtcms.com/public/img/block-6.png" alt="" class="h-full w-full object-cover"></div><div class="w-[24px] h-[24px] object-contain"><img src="https://dev.spurtcms.com/public/img/block-6.png" alt="" class="h-full w-full object-cover"></div></div><div class="w-[80px] h-full"><img src="https://dev.spurtcms.com/public/img/block-6.png" alt="" class="w-full rounded-[2px] h-full"></div></div><div class="flex flex-col gap-[8px] items-start w-full"><div class="flex flex-col items-start gap-[4px]"><h5 class="text-xs font-normal mb-0 text-[#262626]">Lorem ipsum dolor sit</h5><div class="flex gap-[1px] items-center"><img src="img/reviewstar-full.svg" alt=""><img src="https://dev.spurtcms.com/public/img/reviewstar-full.svg" alt=""><img src="https://dev.spurtcms.com/public/img/reviewstar-full.svg" alt=""><img src="https://dev.spurtcms.com/public/img/reviewstar-full.svg" alt=""><img src="https://dev.spurtcms.com/public/img/reviewstar.svg" alt=""></div></div><p class="m-0 text-[#262626] text-xs font-normal">$ 15.00</p><div class="flex flex-col items-start gap-[4px]"><h5 class="text-[14px] font-normal mb-0 text-[#717171]">Color</h5><div class="flex items-center gap-[1px]"><div class="w-[20px] h-[20px] rounded-full p-[2px] border border-[#000000]"><div class="bg-[#000000] h-full rounded-full"></div></div><div class="w-[20px] h-[20px] rounded-full p-[2px]"><div class="bg-[#004DFF] h-full rounded-full"></div></div><div class="w-[20px] h-[20px] rounded-full p-[2px]"><div class="bg-[#3B8620] h-full rounded-full"></div></div></div></div><div class="flex flex-col items-start gap-[4px]"><h5 class="text-[14px] font-normal mb-0 text-[#717171]">Size</h5><div class="flex items-center gap-[8px]"><div class="h-[16px] flex items-center justify-center px-[6px] border border-[#EDEDED] text-[14px] text-[#262626] font-normal rounded-[4px] uppercase">s</div><div class="h-[16px] flex items-center justify-center px-[6px] border bg-[#EBEBEB] border-[#EDEDED] text-[14px] text-[#262626] font-normal rounded-[4px] uppercase">m</div><div class="h-[16px] flex items-center justify-center px-[6px] border border-[#EDEDED] text-[14px] text-[#262626] font-normal rounded-[4px] uppercase">l</div><div class="h-[16px] flex items-center justify-center px-[6px] border border-[#EDEDED] text-[14px] text-[#262626] font-normal rounded-[4px] uppercase">xl</div></div></div></div></div>`,
 			CoverImage:   "/blocks/IMG-1726551883.jpeg",
-			TenantId:     1,
+			TenantId:     "1",
 			Prime:        1,
 			CreatedBy:    2,
 			IsActive:     1,
@@ -133,7 +133,7 @@ func TestCreate(t *testing.T) {
 		MstrTag := MasterTagCreate{
 
 			TagTitle:  "Hello",
-			TenantId:  1,
+			TenantId:  "1",
 			CreatedBy: 2,
 		}
 
@@ -147,7 +147,7 @@ func TestCreate(t *testing.T) {
 			BlockId:   createblock.Id,
 			TagId:     createtags.Id,
 			TagName:   createtags.TagTitle,
-			TenantId:  1,
+			TenantId:  "1",
 			CreatedBy: 2,
 		}
 
@@ -182,7 +182,7 @@ func TestBlockUpdate(t *testing.T) {
 
 	Auth.VerifyToken(token, SecretKey)
 
-	permission, _ := Auth.IsGranted("Blocks", auth.CRUD, 1)
+	permission, _ := Auth.IsGranted("Blocks", auth.CRUD, "1")
 
 	Blocks := BlockSetup(Config{
 		DB:               db,
@@ -196,7 +196,7 @@ func TestBlockUpdate(t *testing.T) {
 		BlockCreate := BlockCreation{
 			Title:      "Halo",
 			ModifiedBy: 2,
-			TenantId:   1,
+			TenantId:   "1",
 		}
 
 		err := Blocks.UpdateBlock(23, BlockCreate)
@@ -230,7 +230,7 @@ func TestBlockDelete(t *testing.T) {
 
 	Auth.VerifyToken(token, SecretKey)
 
-	permission, _ := Auth.IsGranted("Blocks", auth.CRUD, 1)
+	permission, _ := Auth.IsGranted("Blocks", auth.CRUD, "1")
 
 	Blocks := BlockSetup(Config{
 		DB:               db,
@@ -241,7 +241,7 @@ func TestBlockDelete(t *testing.T) {
 
 	if permission {
 
-		err := Blocks.RemoveBlock(23, 1)
+		err := Blocks.RemoveBlock(23, "1")
 		if err != nil {
 			fmt.Println(err)
 		}
