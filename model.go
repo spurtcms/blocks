@@ -123,10 +123,10 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 
 	}
 
-	if chid != "" {
+	// if chid != "" {
 
-		query = query.Where("string_to_array((tbl_blocks.channel_id), ',') && string_to_array(?, ',')", (chid))
-	}
+	// 	query = query.Where("string_to_array((tbl_blocks.channel_id), ',') && string_to_array(?, ',')", (chid))
+	// }
 
 	query.Find(&collection).Count(&count)
 

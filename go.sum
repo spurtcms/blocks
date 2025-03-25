@@ -33,6 +33,10 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/spurtcms/auth v0.0.32 h1:ISYKK1VRCFwX/SeRQquC5tO50k4ypm3XasbTCspglG8=
 github.com/spurtcms/auth v0.0.32/go.mod h1:QDSbAUWyrGmCjvd2UHMPomBAk3TeUmjjZW5wnrInGSU=
+github.com/spurtcms/auth v0.0.36 h1:BiV3OQzLo+meA0bZ2enDBl/demG5dQaDvvgcfvOVYpA=
+github.com/spurtcms/auth v0.0.36/go.mod h1:QDSbAUWyrGmCjvd2UHMPomBAk3TeUmjjZW5wnrInGSU=
+github.com/spurtcms/auth v0.0.37 h1:2GKJE53TIsNkO8sXXTI0LMq80YKXDyouSKztLD7hb6Y=
+github.com/spurtcms/auth v0.0.37/go.mod h1:QDSbAUWyrGmCjvd2UHMPomBAk3TeUmjjZW5wnrInGSU=
 github.com/spurtcms/team-roles v0.0.7 h1:6GjsDpNCPmCX47aGDdjvkud/kJHG0QDP50yI98JFRSg=
 github.com/spurtcms/team-roles v0.0.7/go.mod h1:WFP36zjRo6gkKTFrWy6DT/B+Nh/V/1xHTYS7kJcNPGA=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
