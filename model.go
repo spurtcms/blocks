@@ -115,7 +115,7 @@ type TblBlockCollection struct {
 // get collectionlist
 func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenantid string, chid string) (collection []TblBlock, count int64, err error) {
 
-	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.id,tbl_blocks.is_active,tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_blocks.tenant_id=?", tenantid).Group("tbl_blocks.id").Group("tbl_users.profile_image_path").Order("tbl_blocks.id desc")
+	query := DB.Debug().Table("tbl_blocks").Select("tbl_blocks.id,tbl_blocks.is_active,tbl_blocks.title,tbl_blocks.block_description,tbl_blocks.block_content,tbl_blocks.block_css,tbl_blocks.cover_image,tbl_blocks.created_by,tbl_users.profile_image_path as profile_image_path").Joins("inner join tbl_users on tbl_users.id = tbl_blocks.created_by").Where("tbl_blocks.tenant_id=? and tbl_blocks.is_deleted=0", tenantid).Group("tbl_blocks.id").Group("tbl_users.profile_image_path").Order("tbl_blocks.id desc")
 
 	if filter.Keyword != "" {
 
