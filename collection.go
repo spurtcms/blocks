@@ -118,7 +118,7 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 	block.ChannelSlugname = Bc.ChannelName
 	block.ChannelID = Bc.ChannelId
 	block.SlugName = strings.ToLower(strings.ReplaceAll(Bc.Title, " ", "-"))
-
+	fmt.Println("testing")
 	createblock, err := Blockmodel.CreateBlocks(block, blocks.DB)
 
 	if err != nil {
