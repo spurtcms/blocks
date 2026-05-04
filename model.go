@@ -51,6 +51,7 @@ type TblBlock struct {
 	Id               int       `gorm:"primaryKey;auto_increment;type:serial"`
 	Title            string    `gorm:"type:character varying"`
 	SlugName         string    `gorm:"type:character varying"`
+	Domain           string    `gorm:"type:character varying"`
 	ChannelSlugname  string    `gorm:"type:character varying"`
 	BlockDescription string    `gorm:"type:text"`
 	BlockContent     string    `gorm:"type:text"`
@@ -133,6 +134,7 @@ func (Blockmodel BlockModel) CollectionLists(filter Filter, DB *gorm.DB, tenanti
 	return collection, count, err
 
 }
+
 // // get blocklist
 // func (Blockmodel BlockModel) BlockLists(limit, offset int, filter Filter, DB *gorm.DB, tenantid string) (block []TblBlock, Totalblock int64, err error) {
 

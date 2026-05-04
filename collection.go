@@ -2,6 +2,7 @@ package blocks
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"time"
@@ -118,7 +119,7 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 	block.ChannelSlugname = Bc.ChannelName
 	block.ChannelID = Bc.ChannelId
 	block.SlugName = strings.ToLower(strings.ReplaceAll(Bc.Title, " ", "-"))
-	fmt.Println("testing")
+	block.Domain = os.Getenv("S3_ENDPOINT_URL")
 	createblock, err := Blockmodel.CreateBlocks(block, blocks.DB)
 
 	if err != nil {
