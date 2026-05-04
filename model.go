@@ -14,6 +14,7 @@ type Filter struct {
 type BlockCreation struct {
 	Title            string
 	BlockDescription string
+	BlockUrl         string
 	BlockContent     string
 	BlockCss         string
 	CoverImage       string
