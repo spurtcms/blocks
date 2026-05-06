@@ -120,6 +120,7 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 	block.ChannelID = Bc.ChannelId
 	block.SlugName = strings.ToLower(strings.ReplaceAll(Bc.Title, " ", "-"))
 	block.Domain = os.Getenv("S3_ENDPOINT_URL")
+	block.BlockUrl = Bc.BlockUrl
 	createblock, err := Blockmodel.CreateBlocks(block, blocks.DB)
 
 	if err != nil {
