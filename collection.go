@@ -532,6 +532,7 @@ func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation) error {
 	block.ChannelSlugname = updateblock.ChannelName
 	block.ChannelID = updateblock.ChannelId
 	block.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
+	block.BlockUrl = updateblock.BlockUrl
 
 	err := Blockmodel.UpdateBlock(block, id, blocks.DB)
 
