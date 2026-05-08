@@ -52,6 +52,8 @@ type TblBlock struct {
 	Id               int       `gorm:"primaryKey;auto_increment;type:serial"`
 	Title            string    `gorm:"type:character varying"`
 	SlugName         string    `gorm:"type:character varying"`
+	FolderPath       string    `gorm:"-"`
+	Cdn              string    `gorm:"-"`
 	BlockUrl         string    `gorm:"type:character varying"`
 	Domain           string    `gorm:"type:character varying"`
 	ChannelSlugname  string    `gorm:"type:character varying"`
