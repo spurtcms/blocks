@@ -121,6 +121,7 @@ func (blocks *Block) CreateBlock(Bc BlockCreation) (createblocks TblBlock, err e
 	block.SlugName = strings.ToLower(strings.ReplaceAll(Bc.Title, " ", "-"))
 	block.Domain = os.Getenv("S3_ENDPOINT_URL")
 	block.BlockUrl = Bc.BlockUrl
+	block.TemplateName = Bc.TemplateName
 	createblock, err := Blockmodel.CreateBlocks(block, blocks.DB)
 
 	if err != nil {
@@ -534,6 +535,7 @@ func (blocks *Block) UpdateBlock(id int, updateblock BlockCreation) error {
 	block.ChannelID = updateblock.ChannelId
 	block.ModifiedOn, _ = time.Parse("2006-01-02 15:04:05", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	block.BlockUrl = updateblock.BlockUrl
+	block.TemplateName = updateblock.TemplateName
 
 	err := Blockmodel.UpdateBlock(block, id, blocks.DB)
 

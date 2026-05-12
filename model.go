@@ -26,6 +26,7 @@ type BlockCreation struct {
 	IsActive         int
 	ChannelName      string
 	ChannelId        string
+	TemplateName     string
 }
 
 type MasterTagCreate struct {
@@ -52,6 +53,7 @@ type TblBlock struct {
 	Id               int       `gorm:"primaryKey;auto_increment;type:serial"`
 	Title            string    `gorm:"type:character varying"`
 	SlugName         string    `gorm:"type:character varying"`
+	TemplateName     string    `gorm:"type:character varying"`
 	FolderPath       string    `gorm:"-"`
 	Cdn              string    `gorm:"-"`
 	BlockUrl         string    `gorm:"type:character varying"`
