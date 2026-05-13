@@ -498,13 +498,13 @@ func (Blockmodel BlockModel) BlockEdit(id int, DB *gorm.DB, tenantid string) (bl
 func (Blockmodel BlockModel) UpdateBlock(block TblBlock, id int, DB *gorm.DB) error {
 
 	if block.CoverImage != "" {
-		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and  tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "channel_slugname": block.ChannelSlugname, "channel_id": block.ChannelID, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime, "cover_image": block.CoverImage, "block_url": block.BlockUrl}).Error; err != nil {
+		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and  tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "channel_slugname": block.ChannelSlugname, "channel_id": block.ChannelID, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime, "cover_image": block.CoverImage, "block_url": block.BlockUrl, "template_name": block.TemplateName}).Error; err != nil {
 
 			return err
 		}
 
 	} else {
-		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "channel_slugname": block.ChannelSlugname, "channel_id": block.ChannelID, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime, "block_url": block.BlockUrl}).Error; err != nil {
+		if err := DB.Table("tbl_blocks").Where("tbl_blocks.id=? and tbl_blocks.tenant_id=?", id, block.TenantId).UpdateColumns(map[string]interface{}{"title": block.Title, "block_content": block.BlockContent, "channel_slugname": block.ChannelSlugname, "channel_id": block.ChannelID, "is_active": block.IsActive, "modified_by": block.ModifiedBy, "modified_on": block.ModifiedOn, "prime": block.Prime, "block_url": block.BlockUrl, "template_name": block.TemplateName}).Error; err != nil {
 
 			return err
 		}
