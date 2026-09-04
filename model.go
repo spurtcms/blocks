@@ -222,6 +222,10 @@ func (Blockmodel BlockModel) BlockLists(limit, offset int, filter Filter, DB *go
 		query = query.Where("tbl_blocks.channel_id = ?", filter.Channelid)
 	}
 
+	if filter.TemplateName != "" {
+		query = query.Where("tbl_blocks.template_name = ?", filter.TemplateName)
+	}
+
 	query = query.Group("tbl_blocks.id").Order("tbl_blocks.id DESC")
 
 	if limit != 0 {
