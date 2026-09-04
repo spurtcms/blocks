@@ -7,8 +7,9 @@ import (
 )
 
 type Filter struct {
-	Keyword   string
-	Channelid string
+	Keyword      string
+	Channelid    string
+	TemplateName string
 }
 
 type BlockCreation struct {
